@@ -1,0 +1,659 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.daw-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Transport Bar */
+.transport-bar {
+    background-color: #2d2d2d;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #404040;
+}
+
+.transport-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.transport-btn {
+    background-color: #404040;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s;
+}
+
+.transport-btn:hover {
+    background-color: #555555;
+}
+
+.transport-btn.active {
+    background-color: #007acc;
+}
+
+.tempo-control, .scale-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tempo-control input, .scale-control select {
+    background-color: #404040;
+    border: 1px solid #555555;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.tempo-control input {
+    width: 70px;
+}
+
+.scale-control select {
+    width: 80px;
+}
+
+.scale-control label {
+    color: white;
+    font-size: 14px;
+}
+
+/* Main Content Area */
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Instrument Panel */
+.instrument-panel {
+    width: 250px;
+    background-color: #252525;
+    padding: 15px;
+    border-right: 1px solid #404040;
+    overflow-y: auto;
+}
+
+.instrument-panel h3, .instrument-panel h4 {
+    margin-bottom: 10px;
+    color: #cccccc;
+}
+
+.instrument-category {
+    margin-bottom: 20px;
+}
+
+.category-title {
+    font-size: 14px;
+    color: #aaaaaa;
+    margin-bottom: 8px;
+    padding-left: 5px;
+    border-bottom: 1px solid #404040;
+    padding-bottom: 4px;
+}
+
+.instrument-list {
+    margin-bottom: 10px;
+}
+
+.instrument-btn {
+    display: block;
+    width: 100%;
+    background-color: #404040;
+    border: none;
+    color: white;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.2s;
+}
+
+.instrument-btn:hover {
+    background-color: #555555;
+}
+
+.instrument-btn.active {
+    background-color: #007acc;
+}
+
+/* Piano Roll Modal */
+.piano-roll-modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.piano-roll-content {
+    background-color: #2d2d2d;
+    margin: 2% auto;
+    padding: 0;
+    border: 1px solid #555555;
+    width: 90%;
+    height: 80%;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+
+.piano-roll-header {
+    background-color: #333333;
+    padding: 15px 20px;
+    border-bottom: 1px solid #555555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 8px 8px 0 0;
+}
+
+.piano-roll-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.piano-roll-controls label {
+    color: #cccccc;
+    font-size: 14px;
+}
+
+.piano-roll-controls select {
+    background-color: #555555;
+    border: 1px solid #666666;
+    color: white;
+    padding: 5px 8px;
+    border-radius: 4px;
+}
+
+.close-btn {
+    background-color: #ff4444;
+    border: none;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.close-btn:hover {
+    background-color: #ff6666;
+}
+
+.piano-roll-main {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.piano-keys {
+    width: 120px;
+    background-color: #1e1e1e;
+    border-right: 1px solid #555555;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse;
+}
+
+.piano-key {
+    height: 20px;
+    border-bottom: 1px solid #333333;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.1s;
+}
+
+.piano-key.white {
+    background-color: #f0f0f0;
+    color: #333333;
+}
+
+.piano-key.black {
+    background-color: #333333;
+    color: #cccccc;
+}
+
+.piano-key:hover {
+    background-color: #007acc;
+    color: white;
+}
+
+.piano-key.in-scale {
+    border-left: 3px solid #00ff88;
+}
+
+.piano-key.root-note {
+    border-left: 3px solid #ff6600;
+    font-weight: bold;
+}
+
+.piano-key.out-of-scale {
+    opacity: 0.3;
+}
+
+.note-grid-container {
+    flex: 1;
+    overflow: auto;
+    background-color: #1a1a1a;
+    display: flex;
+    flex-direction: column;
+}
+
+.piano-roll-bar-numbers {
+    height: 30px;
+    background-color: #333333;
+    border-bottom: 1px solid #555555;
+    display: flex;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.piano-roll-bar-label {
+    text-align: center;
+    font-size: 12px;
+    color: #aaaaaa;
+    font-weight: bold;
+    padding: 5px 0;
+    border-right: 2px solid #666666;
+}
+
+.note-grid {
+    display: grid;
+    grid-template-rows: repeat(88, 20px);
+    gap: 0;
+    min-width: 800px;
+}
+
+.note-row {
+    display: grid;
+    gap: 1px;
+    border-bottom: 1px solid #333333;
+}
+
+.note-row.white {
+    background-color: #2a2a2a;
+}
+
+.note-row.black {
+    background-color: #1e1e1e;
+}
+
+.note-row.in-scale {
+    border-left: 3px solid #00ff88;
+}
+
+.note-row.root-note {
+    border-left: 3px solid #ff6600;
+    background-color: rgba(255, 102, 0, 0.1);
+}
+
+.note-row.out-of-scale {
+    opacity: 0.3;
+}
+
+.note-cell {
+    background-color: transparent;
+    border-right: 1px solid #404040;
+    cursor: pointer;
+    transition: background-color 0.1s;
+    position: relative;
+}
+
+.note-cell:hover {
+    background-color: rgba(0, 122, 204, 0.3);
+}
+
+.note-cell.active {
+    background-color: #007acc;
+}
+
+.note-cell.beat-marker {
+    border-right: 2px solid #666666;
+}
+
+/* Timeline Area */
+.timeline-area {
+    flex: 1;
+    background-color: #1e1e1e;
+    padding: 15px;
+    overflow: auto;
+}
+
+.timeline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.timeline-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.timeline-controls button {
+    background-color: #404040;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.timeline-controls button:hover {
+    background-color: #555555;
+}
+
+/* Bar Numbers */
+.bar-numbers {
+    display: flex;
+    margin-bottom: 5px;
+    border-bottom: 1px solid #404040;
+    padding-bottom: 5px;
+}
+
+.track-header-spacer {
+    width: 200px;
+    background-color: transparent;
+}
+
+.bar-labels {
+    display: flex;
+    flex: 1;
+    padding: 0 10px;
+    gap: 2px;
+}
+
+.bar-label {
+    width: 120px;
+    text-align: center;
+    font-size: 12px;
+    color: #aaaaaa;
+    font-weight: bold;
+    padding: 5px 0;
+}
+
+/* Track Controls */
+.track {
+    display: flex;
+    margin-bottom: 10px;
+    background-color: #2a2a2a;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.track-header {
+    width: 200px;
+    padding: 10px;
+    background-color: #333333;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    border-right: 1px solid #404040;
+}
+
+.track-name {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.track-instrument {
+    background-color: #555555;
+    border: 1px solid #666666;
+    color: white;
+    padding: 4px;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+.track-controls {
+    display: flex;
+    gap: 5px;
+    justify-content: space-between;
+}
+
+.track-mute-btn, .track-solo-btn, .track-piano-roll-btn, .track-delete-btn {
+    background-color: #555555;
+    border: none;
+    color: white;
+    width: 25px;
+    height: 25px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.track-mute-btn:hover, .track-solo-btn:hover, .track-piano-roll-btn:hover {
+    background-color: #666666;
+}
+
+.track-delete-btn:hover {
+    background-color: #ff4444;
+}
+
+.track-mute-btn.active {
+    background-color: #ff4444;
+}
+
+.track-solo-btn.active {
+    background-color: #ffaa00;
+}
+
+.track-piano-roll-btn {
+    font-size: 10px;
+}
+
+/* Sequencer Steps */
+.track-sequencer {
+    display: flex;
+    flex: 1;
+    padding: 10px;
+    gap: 2px;
+}
+
+.step {
+    width: 30px;
+    height: 30px;
+    background-color: #404040;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+}
+
+.step.bar-divider {
+    border-left: 3px solid #666666;
+    margin-left: 2px;
+}
+
+.step:hover {
+    background-color: #555555;
+}
+
+.step.active {
+    background-color: #007acc;
+    border-color: #0099ff;
+}
+
+.step.active.bar-divider {
+    background-color: #007acc;
+    border-left: 3px solid #0099ff;
+    border-color: #0099ff;
+}
+
+.step.playing {
+    border-color: #00ff00;
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+}
+
+.step.playing.bar-divider {
+    border-left: 3px solid #00ff00;
+}
+
+/* Mixer Panel */
+.mixer-panel {
+    width: 200px;
+    background-color: #252525;
+    padding: 15px;
+    border-left: 1px solid #404040;
+    overflow-y: auto;
+}
+
+.mixer-panel h3, .mixer-panel h4 {
+    margin-bottom: 10px;
+    color: #cccccc;
+}
+
+.mixer-tracks {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.mixer-track {
+    border-bottom: 1px solid #404040;
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.mixer-track:last-child {
+    border-bottom: none;
+}
+
+.volume-control, .pan-control {
+    margin-bottom: 15px;
+}
+
+.volume-control label, .pan-control label {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: #aaaaaa;
+}
+
+.volume-control input, .pan-control input {
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.volume-value, .pan-value {
+    font-size: 12px;
+    color: #aaaaaa;
+    text-align: center;
+    display: block;
+}
+
+/* Range Input Styling */
+input[type="range"] {
+    -webkit-appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+    background: #404040;
+    height: 4px;
+    border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    background: #007acc;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+input[type="range"]::-moz-range-track {
+    background: #404040;
+    height: 4px;
+    border-radius: 2px;
+    border: none;
+}
+
+input[type="range"]::-moz-range-thumb {
+    background: #007acc;
+    height: 16px;
+    width: 16px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+/* Status Bar */
+.status-bar {
+    background-color: #2d2d2d;
+    padding: 8px 20px;
+    border-top: 1px solid #404040;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    color: #aaaaaa;
+}
+
+.status-info {
+    display: flex;
+    gap: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .instrument-panel, .mixer-panel {
+        width: 100%;
+        height: 200px;
+    }
+    
+    .keyboard {
+        justify-content: center;
+    }
+    
+    .key.white {
+        width: 25px;
+        height: 60px;
+    }
+    
+    .key.black {
+        width: 15px;
+        height: 40px;
+    }
+}

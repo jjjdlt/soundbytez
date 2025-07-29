@@ -1,0 +1,13 @@
+{
+  "name": "soundbytez",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "private": true,
+  "dependencies": {
+    "tone": "^15.1.22"
+  }
+}

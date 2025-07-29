@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundBytez - Web DAW</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="daw-container">
+        <!-- Header with transport controls -->
+        <header class="transport-bar">
+            <div class="transport-controls">
+                <button id="play-btn" class="transport-btn">�</button>
+                <button id="stop-btn" class="transport-btn">�</button>
+                <button id="record-btn" class="transport-btn">�</button>
+                <button id="loop-btn" class="transport-btn">=</button>
+            </div>
+            <div class="tempo-control">
+                <label for="bpm">BPM:</label>
+                <input type="number" id="bpm" value="120" min="60" max="200">
+            </div>
+            <div class="scale-control">
+                <label for="key-select">Key:</label>
+                <select id="key-select">
+                    <option value="C">C</option>
+                    <option value="C#">C#</option>
+                    <option value="D">D</option>
+                    <option value="D#">D#</option>
+                    <option value="E">E</option>
+                    <option value="F">F</option>
+                    <option value="F#">F#</option>
+                    <option value="G">G</option>
+                    <option value="G#">G#</option>
+                    <option value="A">A</option>
+                    <option value="A#">A#</option>
+                    <option value="B">B</option>
+                </select>
+                <select id="scale-select">
+                    <option value="major">Major</option>
+                    <option value="minor">Minor</option>
+                </select>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <!-- Left sidebar - Instruments -->
+            <aside class="instrument-panel">
+                <h3>Instruments</h3>
+                
+                <!-- Drums Category -->
+                <div class="instrument-category">
+                    <h4 class="category-title">Drums</h4>
+                    <div class="instrument-list">
+                        <button class="instrument-btn" data-instrument="kick" data-category="drums">Kick</button>
+                        <button class="instrument-btn" data-instrument="snare" data-category="drums">Snare</button>
+                        <button class="instrument-btn" data-instrument="hihat" data-category="drums">Hi-Hat</button>
+                    </div>
+                </div>
+                
+                <!-- Synths Category -->
+                <div class="instrument-category">
+                    <h4 class="category-title">Synths</h4>
+                    <div class="instrument-list">
+                        <button class="instrument-btn active" data-instrument="synth" data-category="synths">Basic Synth</button>
+                        <button class="instrument-btn" data-instrument="fm" data-category="synths">FM Synth</button>
+                        <button class="instrument-btn" data-instrument="am" data-category="synths">AM Synth</button>
+                        <button class="instrument-btn" data-instrument="noise" data-category="synths">Noise Synth</button>
+                    </div>
+                </div>
+                
+            </aside>
+
+            <!-- Center area - Timeline/Sequencer -->
+            <main class="timeline-area">
+                <div class="timeline-header">
+                    <h3>Timeline</h3>
+                    <div class="timeline-controls">
+                        <button id="add-track-btn">+ Add Track</button>
+                        <button id="clear-all-btn">Clear All</button>
+                    </div>
+                </div>
+                
+                <!-- Bar numbers -->
+                <div class="bar-numbers">
+                    <div class="track-header-spacer"></div>
+                    <div class="bar-labels">
+                        <div class="bar-label">1</div>
+                        <div class="bar-label">2</div>
+                        <div class="bar-label">3</div>
+                        <div class="bar-label">4</div>
+                    </div>
+                </div>
+                
+                <div class="tracks-container">
+                    <div class="track" data-track="0">
+                        <div class="track-header">
+                            <span class="track-name">Track 1</span>
+                            <select class="track-instrument" data-track="0">
+                                <optgroup label="Drums">
+                                    <option value="kick">Kick</option>
+                                    <option value="snare">Snare</option>
+                                    <option value="hihat">Hi-Hat</option>
+                                </optgroup>
+                                <optgroup label="Synths">
+                                    <option value="synth" selected>Basic Synth</option>
+                                    <option value="fm">FM Synth</option>
+                                    <option value="am">AM Synth</option>
+                                    <option value="noise">Noise Synth</option>
+                                </optgroup>
+                            </select>
+                            <div class="track-controls">
+                                <button class="track-mute-btn" data-track="0">M</button>
+                                <button class="track-solo-btn" data-track="0">S</button>
+                                <button class="track-piano-roll-btn" data-track="0">🎹</button>
+                                <button class="track-delete-btn" data-track="0">×</button>
+                            </div>
+                        </div>
+                        <div class="track-sequencer">
+                            <div class="step" data-step="0" data-track="0"></div>
+                            <div class="step" data-step="1" data-track="0"></div>
+                            <div class="step" data-step="2" data-track="0"></div>
+                            <div class="step" data-step="3" data-track="0"></div>
+                            <div class="step bar-divider" data-step="4" data-track="0"></div>
+                            <div class="step" data-step="5" data-track="0"></div>
+                            <div class="step" data-step="6" data-track="0"></div>
+                            <div class="step" data-step="7" data-track="0"></div>
+                            <div class="step bar-divider" data-step="8" data-track="0"></div>
+                            <div class="step" data-step="9" data-track="0"></div>
+                            <div class="step" data-step="10" data-track="0"></div>
+                            <div class="step" data-step="11" data-track="0"></div>
+                            <div class="step bar-divider" data-step="12" data-track="0"></div>
+                            <div class="step" data-step="13" data-track="0"></div>
+                            <div class="step" data-step="14" data-track="0"></div>
+                            <div class="step" data-step="15" data-track="0"></div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Right sidebar - Mixer -->
+            <aside class="mixer-panel">
+                <h3>Mixer</h3>
+                <div class="master-controls">
+                    <h4>Master</h4>
+                    <div class="volume-control">
+                        <label for="master-volume">Volume</label>
+                        <input type="range" id="master-volume" min="0" max="100" value="80">
+                        <span class="volume-value" id="master-volume-value">80</span>
+                    </div>
+                </div>
+                
+                <div class="mixer-tracks" id="mixer-tracks">
+                    <div class="mixer-track" data-track="0">
+                        <h4>Track 1</h4>
+                        <div class="volume-control">
+                            <label>Volume</label>
+                            <input type="range" class="track-volume-slider" data-track="0" min="0" max="100" value="75">
+                            <span class="volume-value">75</span>
+                        </div>
+                        <div class="pan-control">
+                            <label>Pan</label>
+                            <input type="range" class="track-pan-slider" data-track="0" min="-100" max="100" value="0">
+                            <span class="pan-value">0</span>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- Status bar -->
+        <footer class="status-bar">
+            <div class="status-info">
+                <span id="playback-position">00:00</span>
+                <span id="audio-status">Audio: Ready</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Piano Roll Modal -->
+    <div id="piano-roll-modal" class="piano-roll-modal">
+        <div class="piano-roll-content">
+            <div class="piano-roll-header">
+                <h3 id="piano-roll-title">Piano Roll - Track 1</h3>
+                <div class="piano-roll-controls">
+                    <label for="note-division">Note Division:</label>
+                    <select id="note-division">
+                        <option value="4n">Quarter Notes</option>
+                        <option value="8n" selected>Eighth Notes</option>
+                        <option value="16n">Sixteenth Notes</option>
+                        <option value="32n">Thirty-second Notes</option>
+                    </select>
+                    <button id="close-piano-roll" class="close-btn">×</button>
+                </div>
+            </div>
+            
+            <div class="piano-roll-main">
+                <div class="piano-keys" id="piano-keys">
+                    <!-- Piano keys will be generated by JavaScript -->
+                </div>
+                <div class="note-grid-container">
+                    <div class="piano-roll-bar-numbers" id="piano-roll-bar-numbers">
+                        <!-- Bar numbers will be generated by JavaScript -->
+                    </div>
+                    <div class="note-grid" id="note-grid">
+                        <!-- Note grid will be generated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/tone@15.1.22/build/Tone.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
