@@ -657,3 +657,194 @@ input[type="range"]::-moz-range-thumb {
         height: 40px;
     }
 }
+
+/* Scale Keyboard Mapping */
+.scale-keyboard-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #2a2a2a;
+    border-radius: 8px;
+}
+
+.scale-keyboard-section h4 {
+    margin-bottom: 10px;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+.keyboard-hint {
+    margin-bottom: 10px;
+    font-size: 12px;
+    color: #aaaaaa;
+}
+
+.keyboard-hint div {
+    margin-bottom: 4px;
+}
+
+.scale-notes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 4px;
+    font-size: 11px;
+}
+
+.key-note-mapping {
+    padding: 4px 6px;
+    background-color: #404040;
+    border-radius: 4px;
+    text-align: center;
+    transition: background-color 0.2s;
+}
+
+.key-note-mapping.root-note {
+    background-color: #4a6741;
+    border: 1px solid #6a8f61;
+}
+
+.key-note-mapping.inactive {
+    background-color: #2a2a2a;
+    color: #666666;
+}
+
+.key-label {
+    font-weight: bold;
+    color: #ffffff;
+}
+
+.key-label.inactive {
+    color: #666666;
+}
+
+.note-label {
+    color: #dddddd;
+}
+
+.note-label.inactive {
+    color: #666666;
+}
+
+/* Piano Roll Modal Styling */
+.piano-roll-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: none;
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.piano-roll-content {
+    background-color: #2d2d2d;
+    border-radius: 12px;
+    width: 95%;
+    height: 90%;
+    max-width: 1200px;
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.piano-roll-header {
+    padding: 15px 20px;
+    background-color: #3d3d3d;
+    border-bottom: 1px solid #555;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.piano-roll-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background-color: #2a2a2a;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.zoom-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background-color: #404040;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-btn:hover {
+    background-color: #505050;
+}
+
+#zoom-level {
+    min-width: 45px;
+    text-align: center;
+    font-size: 12px;
+    color: #ccc;
+}
+
+/* Piano Roll Visualization Styling */
+.piano-roll-main {
+    flex: 1;
+    padding: 15px;
+    background-color: #1a1a1a;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.piano-roll-visualization {
+    flex: 1;
+    border: 1px solid #404040;
+    border-radius: 8px;
+    background-color: #2a2a2a;
+    min-height: 400px;
+    position: relative;
+    overflow: hidden;
+}
+
+.piano-roll-controls-bottom {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: #2d2d2d;
+    border-radius: 8px;
+}
+
+.piano-roll-btn {
+    padding: 8px 16px;
+    background-color: #404040;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.piano-roll-btn:hover {
+    background-color: #505050;
+}
+
+.piano-roll-btn:active {
+    background-color: #353535;
+}

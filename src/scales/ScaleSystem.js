@@ -2,7 +2,8 @@
  * ScaleSystem - Handles musical scale calculations and note validation
  */
 export class ScaleSystem {
-    constructor(initialKey = 'C', initialScale = 'major') {
+    constructor(daw, initialKey = 'C', initialScale = 'major') {
+        this.daw = daw;
         this.currentKey = initialKey;
         this.currentScale = initialScale;
         this.noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
@@ -43,7 +44,12 @@ export class ScaleSystem {
         this.currentKey = newKey;
         this.scaleNotes = this.calculateScaleNotes(this.currentKey, this.currentScale);
         this.notifyScaleChange();
-        console.log(`Key changed to ${newKey} ${this.currentScale}`);
+        if (this.daw.pianoRoll) {
+            this.daw.pianoRoll.updatePianoRollScaleHighlighting();
+        }
+        // Save key change to storage
+        this.daw.saveDAWData();
+        console.log(`🎵 Key changed to ${newKey} ${this.currentScale} and saved`);
     }
 
     changeScale(newScale) {
@@ -55,7 +61,12 @@ export class ScaleSystem {
         this.currentScale = newScale;
         this.scaleNotes = this.calculateScaleNotes(this.currentKey, this.currentScale);
         this.notifyScaleChange();
-        console.log(`Scale changed to ${this.currentKey} ${newScale}`);
+        if (this.daw.pianoRoll) {
+            this.daw.pianoRoll.updatePianoRollScaleHighlighting();
+        }
+        // Save scale change to storage
+        this.daw.saveDAWData();
+        console.log(`🎵 Scale changed to ${this.currentKey} ${newScale} and saved`);
     }
 
     isNoteInScale(noteName) {

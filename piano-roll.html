@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundBytez - Piano Roll</title>
+    <link rel="stylesheet" href="piano-roll.css">
+</head>
+<body>
+    <div class="piano-roll-app">
+        <!-- Header with controls and navigation -->
+        <header class="piano-roll-header">
+            <div class="header-left">
+                <button id="back-to-daw" class="nav-btn">← Back to DAW</button>
+                <h1 id="track-title">Piano Roll - Track 1</h1>
+            </div>
+            
+            <div class="header-controls">
+                <div class="tempo-display">
+                    <label>BPM: <span id="current-bpm">120</span></label>
+                </div>
+                
+                <div class="scale-display">
+                    <label>Scale: <span id="current-scale">C Major</span></label>
+                </div>
+                
+                <div class="grid-info">
+                    <label>Grid: <span>8 Bars × 4 Beats</span></label>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="zoom-controls">
+                    <button id="zoom-out-btn" class="zoom-btn">−</button>
+                    <span id="zoom-level">100%</span>
+                    <button id="zoom-in-btn" class="zoom-btn">+</button>
+                </div>
+                
+                <div class="playback-controls">
+                    <button id="play-btn" class="control-btn">▶</button>
+                    <button id="stop-btn" class="control-btn">⏹</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main piano roll area -->
+        <main class="piano-roll-main">
+            <div id="piano-roll-visualization" class="visualization-container">
+                <!-- PianorollVis.js will render here -->
+            </div>
+        </main>
+
+        <!-- Bottom toolbar -->
+        <footer class="piano-roll-footer">
+            <div class="footer-left">
+                <button id="add-note-btn" class="tool-btn">Add Note</button>
+                <button id="clear-notes-btn" class="tool-btn">Clear All</button>
+                <button id="play-preview-btn" class="tool-btn">Play Preview</button>
+            </div>
+            
+            <div class="footer-center">
+                <div class="keyboard-hint">
+                    <span>🎹 Piano Keys: Preview notes | 🎯 Grid Cells: Add/Remove notes | ⌨️ Keyboard: A S D F G H J K L | Q W E R T Y U I O P</span>
+                </div>
+            </div>
+            
+            <div class="footer-right">
+                <button id="save-and-return-btn" class="save-btn">Save & Return</button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/tone@15.1.22/build/Tone.js"></script>
+    <script src="note_visualization.js"></script>
+    <script type="module" src="src/piano-roll/PianoRollPage.js"></script>
+</body>
+</html>

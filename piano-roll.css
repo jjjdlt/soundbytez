@@ -1,0 +1,313 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.piano-roll-app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* Header Styles */
+.piano-roll-header {
+    background-color: #2d2d2d;
+    padding: 12px 20px;
+    border-bottom: 1px solid #404040;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 60px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.nav-btn {
+    background-color: #404040;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.nav-btn:hover {
+    background-color: #555555;
+}
+
+#track-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #ffffff;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.tempo-display, .scale-display, .grid-info {
+    color: #cccccc;
+    font-size: 14px;
+}
+
+.grid-info span {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #333333;
+    border-radius: 6px;
+    padding: 4px;
+}
+
+.zoom-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background-color: #404040;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zoom-btn:hover {
+    background-color: #505050;
+}
+
+#zoom-level {
+    min-width: 45px;
+    text-align: center;
+    font-size: 12px;
+    color: #ccc;
+}
+
+.playback-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.control-btn {
+    width: 35px;
+    height: 35px;
+    border: none;
+    background-color: #404040;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.control-btn:hover {
+    background-color: #555555;
+}
+
+.control-btn.active {
+    background-color: #007acc;
+}
+
+/* Main Content */
+.piano-roll-main {
+    flex: 1;
+    overflow: hidden;
+    background-color: #1e1e1e;
+}
+
+.visualization-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background-color: #1e1e1e;
+}
+
+/* Footer Styles */
+.piano-roll-footer {
+    background-color: #2d2d2d;
+    padding: 12px 20px;
+    border-top: 1px solid #404040;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 50px;
+}
+
+.footer-left {
+    display: flex;
+    gap: 10px;
+}
+
+.tool-btn {
+    background-color: #404040;
+    border: none;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.2s;
+}
+
+.tool-btn:hover {
+    background-color: #555555;
+}
+
+.footer-center {
+    flex: 1;
+    text-align: center;
+}
+
+.keyboard-hint {
+    color: #888888;
+    font-size: 10px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.4;
+    transition: color 0.3s ease;
+}
+
+.keyboard-hint.audio-initializing {
+    color: #ffaa00;
+    animation: pulse 1s infinite;
+}
+
+.keyboard-hint.audio-ready {
+    color: #00ff88;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.footer-right {
+    display: flex;
+    gap: 10px;
+}
+
+.save-btn {
+    background-color: #007acc;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.save-btn:hover {
+    background-color: #005a99;
+}
+
+/* Piano Roll Visualization Overrides */
+.visualization-container canvas {
+    background-color: transparent !important;
+}
+
+.visualization-container svg {
+    background-color: #1e1e1e !important;
+}
+
+/* Custom Grid Styles */
+.visualization-container .custom-grid {
+    pointer-events: none;
+}
+
+.visualization-container .grid-cell {
+    pointer-events: all;
+    transition: fill 0.1s ease;
+}
+
+.visualization-container .grid-cell:hover:not(.active-note) {
+    fill: rgba(0, 122, 204, 0.3) !important;
+}
+
+.visualization-container .grid-cell.active-note {
+    opacity: 0.8;
+}
+
+.visualization-container .grid-cell.active-note:hover {
+    opacity: 1.0;
+    filter: brightness(1.2);
+}
+
+/* Loading state */
+.visualization-container::before {
+    content: 'Loading piano roll...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #666666;
+    font-size: 14px;
+    z-index: 1;
+}
+
+.visualization-container.loaded::before {
+    display: none;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .piano-roll-header {
+        flex-direction: column;
+        gap: 10px;
+        padding: 10px 15px;
+    }
+    
+    .header-controls {
+        gap: 15px;
+    }
+    
+    .piano-roll-footer {
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 15px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header-controls {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .keyboard-hint {
+        font-size: 10px;
+    }
+}

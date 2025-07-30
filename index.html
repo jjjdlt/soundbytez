@@ -11,10 +11,10 @@
         <!-- Header with transport controls -->
         <header class="transport-bar">
             <div class="transport-controls">
-                <button id="play-btn" class="transport-btn">�</button>
-                <button id="stop-btn" class="transport-btn">�</button>
-                <button id="record-btn" class="transport-btn">�</button>
-                <button id="loop-btn" class="transport-btn">=</button>
+                <button id="play-btn" class="transport-btn">PLAY</button>
+                <button id="stop-btn" class="transport-btn">STOP</button>
+                <button id="record-btn" class="transport-btn">RECORD</button>
+                <button id="loop-btn" class="transport-btn">LOOP</button>
             </div>
             <div class="tempo-control">
                 <label for="bpm">BPM:</label>
@@ -47,7 +47,7 @@
             <!-- Left sidebar - Instruments -->
             <aside class="instrument-panel">
                 <h3>Instruments</h3>
-                
+
                 <!-- Drums Category -->
                 <div class="instrument-category">
                     <h4 class="category-title">Drums</h4>
@@ -68,6 +68,18 @@
                         <button class="instrument-btn" data-instrument="noise" data-category="synths">Noise Synth</button>
                     </div>
                 </div>
+
+                <!-- Scale Keyboard Mapping -->
+                <div class="scale-keyboard-section">
+                    <h4>Scale Keyboard Mapping</h4>
+                    <div class="keyboard-hint">
+                        <div>Lower Row: A S D F G H J K L</div>
+                        <div>Upper Row: Q W E R T Y U I O P</div>
+                    </div>
+                    <div id="scale-notes-display" class="scale-notes">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
                 
             </aside>
 
@@ -78,6 +90,7 @@
                     <div class="timeline-controls">
                         <button id="add-track-btn">+ Add Track</button>
                         <button id="clear-all-btn">Clear All</button>
+                        <button id="reset-daw-btn" style="background-color: #d32f2f; color: white;">🧹 Reset DAW</button>
                     </div>
                 </div>
                 
@@ -89,6 +102,10 @@
                         <div class="bar-label">2</div>
                         <div class="bar-label">3</div>
                         <div class="bar-label">4</div>
+                        <div class="bar-label">5</div>
+                        <div class="bar-label">6</div>
+                        <div class="bar-label">7</div>
+                        <div class="bar-label">8</div>
                     </div>
                 </div>
                 
@@ -133,6 +150,22 @@
                             <div class="step" data-step="13" data-track="0"></div>
                             <div class="step" data-step="14" data-track="0"></div>
                             <div class="step" data-step="15" data-track="0"></div>
+                            <div class="step bar-divider" data-step="16" data-track="0"></div>
+                            <div class="step" data-step="17" data-track="0"></div>
+                            <div class="step" data-step="18" data-track="0"></div>
+                            <div class="step" data-step="19" data-track="0"></div>
+                            <div class="step bar-divider" data-step="20" data-track="0"></div>
+                            <div class="step" data-step="21" data-track="0"></div>
+                            <div class="step" data-step="22" data-track="0"></div>
+                            <div class="step" data-step="23" data-track="0"></div>
+                            <div class="step bar-divider" data-step="24" data-track="0"></div>
+                            <div class="step" data-step="25" data-track="0"></div>
+                            <div class="step" data-step="26" data-track="0"></div>
+                            <div class="step" data-step="27" data-track="0"></div>
+                            <div class="step bar-divider" data-step="28" data-track="0"></div>
+                            <div class="step" data-step="29" data-track="0"></div>
+                            <div class="step" data-step="30" data-track="0"></div>
+                            <div class="step" data-step="31" data-track="0"></div>
                         </div>
                     </div>
                 </div>
@@ -149,7 +182,7 @@
                         <span class="volume-value" id="master-volume-value">80</span>
                     </div>
                 </div>
-                
+
                 <div class="mixer-tracks" id="mixer-tracks">
                     <div class="mixer-track" data-track="0">
                         <h4>Track 1</h4>
@@ -177,40 +210,7 @@
         </footer>
     </div>
 
-    <!-- Piano Roll Modal -->
-    <div id="piano-roll-modal" class="piano-roll-modal">
-        <div class="piano-roll-content">
-            <div class="piano-roll-header">
-                <h3 id="piano-roll-title">Piano Roll - Track 1</h3>
-                <div class="piano-roll-controls">
-                    <label for="note-division">Note Division:</label>
-                    <select id="note-division">
-                        <option value="4n">Quarter Notes</option>
-                        <option value="8n" selected>Eighth Notes</option>
-                        <option value="16n">Sixteenth Notes</option>
-                        <option value="32n">Thirty-second Notes</option>
-                    </select>
-                    <button id="close-piano-roll" class="close-btn">×</button>
-                </div>
-            </div>
-            
-            <div class="piano-roll-main">
-                <div class="piano-keys" id="piano-keys">
-                    <!-- Piano keys will be generated by JavaScript -->
-                </div>
-                <div class="note-grid-container">
-                    <div class="piano-roll-bar-numbers" id="piano-roll-bar-numbers">
-                        <!-- Bar numbers will be generated by JavaScript -->
-                    </div>
-                    <div class="note-grid" id="note-grid">
-                        <!-- Note grid will be generated by JavaScript -->
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script src="https://unpkg.com/tone@15.1.22/build/Tone.js"></script>
-    <script src="script.js"></script>
+    <script type="module" src="script.js"></script>
 </body>
 </html>
