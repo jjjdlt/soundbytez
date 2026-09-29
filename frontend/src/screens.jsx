@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
-import { createJob, getJob, pollJob, fileUrl, inputUrl } from "./api";
+import { createJob, pollJob, fileUrl, inputUrl } from "./api";
 import { useAuth } from "./auth";
-import { addEntry, getLibrary, removeEntry, updateEntry, useLibrary } from "./library";
+import { deleteTrack, getTrack, stemUrls, useTracks } from "./tracks";
 import { useUpload } from "./upload";
 import { StemPlayer } from "./stemPlayer";
 import { Dropzone, JobProgress, ErrorBox } from "./components";
 
 // ------------------------------------------------------------------ shared hook
+// MIDI / lyrics jobs aren't saved to accounts yet — only stem separation is.
 function useJobFlow(jobType) {
-  const { user } = useAuth();
   const [job, setJob] = useState(null);
   const [error, setError] = useState(null);
   const [running, setRunning] = useState(false);
@@ -19,8 +19,7 @@ function useJobFlow(jobType) {
     setJob(null);
     setRunning(true);
     try {
-      const jobId = await createJob(jobType, file, extra);
-      if (user) addEntry(user.id, { jobId, type: jobType, name: file.name, size: file.size });
+      const { jobId } = await createJob(jobType, file, extra);
       const final = await pollJob(jobId, setJob);
       setJob(final);
     } catch (e) {
@@ -61,46 +60,34 @@ const formatBytes = (n) =>
       ? `${(n / 1024 ** 2).toFixed(1)} MB`
       : `${(n / 1024 ** 3).toFixed(2)} GB`;
 
-const formatDate = (ms) =>
-  new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+const formatDate = (iso) =>
+  new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 
-const stemsLabel = (stems) =>
-  typeof stems === "number" ? `${stems}/4` : { error: "failed", missing: "unavailable" }[stems] ?? "processing…";
+const stemsLabel = (t) =>
+  t.status === "done" ? `${t.stems.length}/${t.stems.length}` : t.status === "error" ? "failed" : "processing…";
 
-/** Returning users: their uploads. */
+/** Returning users: their saved tracks. */
 function Dashboard({ user }) {
-  const entries = useLibrary(user.id);
-  const stemJobs = entries.filter((e) => e.type === "stem_separation");
-  const storageUsed = entries.reduce((sum, e) => sum + (e.size ?? 0), 0);
-  const midiCount = entries.filter((e) => e.type === "midi_transcription").length;
+  const { tracks, error, refresh } = useTracks(user.id);
+  const [deleteError, setDeleteError] = useState(null);
+  const stemTracks = tracks.filter((t) => t.type === "stem_separation");
+  const storageUsed = tracks.reduce((sum, t) => sum + (t.size_bytes ?? 0), 0);
+  const midiCount = tracks.filter((t) => t.type === "midi_transcription").length;
 
-  // Backfill stem counts for jobs that finished while the user was on another page.
-  const pendingKey = stemJobs.filter((e) => e.stems == null).map((e) => e.jobId).join();
-  useEffect(() => {
-    if (!pendingKey) return;
-    let cancelled = false;
-    const ids = pendingKey.split(",");
-    const check = () =>
-      ids.forEach((jobId) =>
-        getJob(jobId)
-          .then((job) => {
-            if (cancelled) return;
-            if (job.status === "done") updateEntry(user.id, jobId, { stems: job.result.stems.length });
-            if (job.status === "error") updateEntry(user.id, jobId, { stems: "error" });
-          })
-          // 404 = job gone from the server; anything else (e.g. backend down) just retries next tick
-          .catch((e) => !cancelled && e.message.includes("404") && updateEntry(user.id, jobId, { stems: "missing" })),
-      );
-    check();
-    const t = setInterval(check, 2000);
-    return () => {
-      cancelled = true;
-      clearInterval(t);
-    };
-  }, [pendingKey, user.id]);
+  const remove = async (track) => {
+    if (!confirm(`Delete ${track.name}? This removes its stems permanently.`)) return;
+    setDeleteError(null);
+    try {
+      await deleteTrack(track);
+    } catch (e) {
+      setDeleteError(`Couldn't delete ${track.name}: ${e.message}`);
+    }
+    refresh();
+  };
 
   return (
     <div className="dashboard">
+      <ErrorBox error={error ?? deleteError} />
       <table className="file-table">
         <thead>
           <tr>
@@ -111,24 +98,21 @@ function Dashboard({ user }) {
           </tr>
         </thead>
         <tbody>
-          {stemJobs.length === 0 && (
+          {stemTracks.length === 0 && (
             <tr>
               <td colSpan={4} className="empty muted">
                 no uploads yet — hit <strong>+ upload</strong> up top
               </td>
             </tr>
           )}
-          {stemJobs.map((e) => (
-            <tr key={e.jobId}>
-              <td className="file-name" title={e.name}>{e.name}</td>
-              <td>{formatDate(e.createdAt)}</td>
-              <td>{stemsLabel(e.stems)}</td>
+          {stemTracks.map((t) => (
+            <tr key={t.id}>
+              <td className="file-name" title={t.name}>{t.name}</td>
+              <td>{formatDate(t.created_at)}</td>
+              <td title={t.error ?? undefined}>{stemsLabel(t)}</td>
               <td className="options">
-                <Link to={`/track/${e.jobId}`} state={{ name: e.name }}>open</Link>
-                <button
-                  className="link-btn danger"
-                  onClick={() => confirm(`Delete ${e.name}?`) && removeEntry(user.id, e.jobId)}
-                >
+                <Link to={`/track/${t.id}`}>open</Link>
+                <button className="link-btn danger" onClick={() => remove(t)}>
                   delete
                 </button>
               </td>
@@ -147,12 +131,13 @@ function Dashboard({ user }) {
 
 // ------------------------------------------------------------------ Login / sign up
 export function Login() {
-  const { user, signIn, signUp } = useAuth();
+  const { user, enabled, signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const [mode, setMode] = useState("login"); // "login" | "signup"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null);
   const [busy, setBusy] = useState(false);
 
   if (user) return <Navigate to="/" replace />;
@@ -160,10 +145,17 @@ export function Login() {
   const submit = async (e) => {
     e.preventDefault();
     setError(null);
+    setNotice(null);
     setBusy(true);
     try {
-      await (mode === "login" ? signIn : signUp)({ email, password });
-      navigate("/");
+      if (mode === "login") {
+        await signIn({ email, password });
+        navigate("/");
+      } else {
+        const { needsConfirmation } = await signUp({ email, password });
+        if (needsConfirmation) setNotice(`Check ${email.trim()} for a confirmation link, then log in.`);
+        else navigate("/");
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -174,6 +166,7 @@ export function Login() {
   const switchMode = (m) => {
     setMode(m);
     setError(null);
+    setNotice(null);
   };
 
   return (
@@ -196,57 +189,123 @@ export function Login() {
           <input
             type="password"
             autoComplete={mode === "login" ? "current-password" : "new-password"}
+            minLength={mode === "signup" ? 6 : undefined}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
           />
         </label>
-        <ErrorBox error={error} />
-        <button className="btn" disabled={busy}>
+        <ErrorBox error={error ?? (enabled ? null : "Accounts aren't configured yet (missing Supabase env vars)")} />
+        {notice && <div className="notice-box">{notice}</div>}
+        <button className="btn" disabled={busy || !enabled}>
           {busy ? "…" : mode === "login" ? "log in" : "create account"}
         </button>
-        <p className="muted small">mock auth — accounts live in this browser only</p>
       </form>
     </div>
   );
 }
 
-// ------------------------------------------------------------------ Track (stem results)
+// ------------------------------------------------------------------ stem results
 // Display order, top to bottom; unknown stems (e.g. from other models) go last.
 const STEM_ORDER = ["vocals", "drums", "bass", "guitar", "piano", "other"];
 const stemRank = (name) => (STEM_ORDER.includes(name) ? STEM_ORDER.indexOf(name) : STEM_ORDER.length);
+const sortStems = (stems) => [...stems].sort((a, b) => stemRank(a.name) - stemRank(b.name));
 
-export function Track() {
-  const { jobId } = useParams();
-  const { state } = useLocation();
-  const { user } = useAuth();
+const STARTING = { progress: 0, status: "queued", message: "Starting" };
+
+/** Poll a backend job; returns the latest job object (null until the first poll lands). */
+function useJob(jobId, { onError } = {}) {
   const [job, setJob] = useState(null);
+  useEffect(() => {
+    if (!jobId) return;
+    setJob(null);
+    let cancelled = false;
+    pollJob(jobId, (j) => !cancelled && setJob(j))
+      .then((j) => !cancelled && setJob(j))
+      .catch((e) => !cancelled && onError?.(e));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobId]);
+  return job;
+}
+
+/** A signed-in user's saved track, played from Supabase Storage. */
+export function Track() {
+  const { trackId } = useParams();
+  const { state } = useLocation();
+  const [track, setTrack] = useState(null);
+  const [stems, setStems] = useState(null);
   const [error, setError] = useState(null);
 
+  const load = async () => {
+    try {
+      const t = await getTrack(trackId);
+      setTrack(t);
+      if (t.status === "done") setStems(sortStems(await stemUrls(t)));
+      if (t.status === "error") setError(t.error || "Separation failed");
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
   useEffect(() => {
-    setJob(null);
+    setTrack(null);
+    setStems(null);
     setError(null);
-    pollJob(jobId, setJob)
-      .then((final) => {
-        setJob(final);
-        if (user) updateEntry(user.id, jobId, { stems: final.result.stems.length });
-      })
-      .catch((e) =>
-        setError(e.message.includes("404") ? "This track is no longer on the server (was the backend restarted?)" : e.message),
-      );
-  }, [jobId, user]);
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trackId]);
+
+  // While processing, show live progress from the backend job, then reload the
+  // row once the job is done (the backend marks the row done before the job).
+  const processing = track?.status === "processing";
+  const job = useJob(processing ? track.job_id : null, {
+    onError: (e) =>
+      setError(
+        e.message.includes("404")
+          ? "Processing was interrupted (the backend restarted). Delete this track and upload it again."
+          : e.message,
+      ),
+  });
+  useEffect(() => {
+    if (job?.status === "done") load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [job?.status]);
+
+  const title = track?.name ?? state?.name ?? "";
+
+  return (
+    <div className="screen wide">
+      <ErrorBox error={error} />
+      {!stems && !error && (
+        <>
+          <h2 className="track-title">{title}</h2>
+          <JobProgress job={job ?? STARTING} />
+        </>
+      )}
+      {stems && <StemPlayer stems={stems} title={title} />}
+    </div>
+  );
+}
+
+/** A guest's unsaved job, played straight from the backend. */
+export function GuestJob() {
+  const { jobId } = useParams();
+  const { state } = useLocation();
+  const [error, setError] = useState(null);
+  const job = useJob(jobId, {
+    onError: (e) =>
+      setError(e.message.includes("404") ? "This track is no longer on the server (was the backend restarted?)" : e.message),
+  });
 
   const done = job?.status === "done";
   const stems = useMemo(
-    () =>
-      done
-        ? [...job.result.stems]
-            .sort((a, b) => stemRank(a.name) - stemRank(b.name))
-            .map((s) => ({ name: s.name, url: fileUrl(jobId, s.file) }))
-        : null,
+    () => (done ? sortStems(job.result.stems).map((s) => ({ name: s.name, url: fileUrl(jobId, s.file) })) : null),
     [done, job, jobId],
   );
-  const title = state?.name ?? (user && getLibrary(user.id).find((e) => e.jobId === jobId)?.name) ?? "untitled";
+  const title = state?.name ?? "untitled";
 
   return (
     <div className="screen wide">
@@ -254,10 +313,17 @@ export function Track() {
       {!done && !error && (
         <>
           <h2 className="track-title">{title}</h2>
-          <JobProgress job={job ?? { progress: 0, status: "queued", message: "Starting" }} />
+          <JobProgress job={job ?? STARTING} />
         </>
       )}
-      {stems && <StemPlayer stems={stems} title={title} />}
+      {stems && (
+        <>
+          <StemPlayer stems={stems} title={title} />
+          <p className="muted small guest-note">
+            <Link to="/login">Log in</Link> to keep your stems — guest results disappear when the server restarts.
+          </p>
+        </>
+      )}
     </div>
   );
 }

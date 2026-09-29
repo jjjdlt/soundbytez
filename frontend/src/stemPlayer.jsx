@@ -204,7 +204,7 @@ export function StemPlayer({ stems, title }) {
                 >
                   S
                 </button>
-                <a className="round-btn" title="download" href={s.url} download>
+                <a className="round-btn" title="download" href={s.downloadUrl ?? s.url} download>
                   ↓
                 </a>
               </div>

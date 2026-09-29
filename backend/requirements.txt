@@ -2,6 +2,8 @@
 fastapi>=0.115
 uvicorn[standard]>=0.30
 python-multipart>=0.0.9
+supabase>=2.31      # accounts + stem storage (optional at runtime: no .env → guest mode)
+python-dotenv>=1.0
 
 # ---- Milestone 2: stem separation (HEAVY) ----
 # Install torch FIRST with the CUDA build for your GPU, or pip pulls a CPU-only build:

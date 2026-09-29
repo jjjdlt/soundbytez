@@ -100,6 +100,11 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: ui-mon
 }
 .auth-card input:focus { outline: none; border-color: var(--accent); }
 .auth-card p { margin: 0; text-align: center; }
+.notice-box { background: #1d3325; border: 1px solid #2f6b43; padding: 12px; border-radius: 6px; font-size: 14px; }
+.auth-card .btn:disabled { cursor: not-allowed; }
+
+.guest-note { text-align: center; margin-top: 16px; }
+.guest-note a { color: var(--accent); }
 
 /* ---------- stem player */
 .track-title { font-weight: normal; }

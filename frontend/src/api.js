@@ -9,16 +9,22 @@ async function apiFetch(url, options) {
   }
 }
 
-export async function createJob(jobType, file, extraFields = {}) {
+/**
+ * Start a job. With an accessToken (signed-in user) the backend also saves the
+ * result to their Supabase library and returns its track_id; otherwise track_id is null.
+ */
+export async function createJob(jobType, file, extraFields = {}, accessToken = null) {
   const form = new FormData();
   form.append("file", file);
   for (const [k, v] of Object.entries(extraFields)) form.append(k, v);
-  const res = await apiFetch(`${API}/api/jobs/${jobType}`, { method: "POST", body: form });
+  const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+  const res = await apiFetch(`${API}/api/jobs/${jobType}`, { method: "POST", body: form, headers });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.detail || `Upload failed (${res.status})`);
   }
-  return (await res.json()).job_id;
+  const { job_id, track_id = null } = await res.json();
+  return { jobId: job_id, trackId: track_id };
 }
 
 export async function getJob(jobId) {

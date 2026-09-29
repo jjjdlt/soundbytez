@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom";
-import { Home, Login, Track, MidiGrabber, LyricCast } from "./screens";
+import { Home, Login, Track, GuestJob, MidiGrabber, LyricCast } from "./screens";
 import { AuthProvider, useAuth } from "./auth";
 import { useUpload } from "./upload";
 import "./App.css";
@@ -78,7 +78,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/track/:jobId" element={<Track />} />
+          <Route path="/track/:trackId" element={<Track />} />
+          <Route path="/job/:jobId" element={<GuestJob />} />
           <Route path="/midi" element={<MidiGrabber />} />
           <Route path="/lyrics" element={<LyricCast />} />
         </Routes>

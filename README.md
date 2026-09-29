@@ -15,9 +15,20 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 # Real stem separation (Demucs) needs torch installed FIRST, with the CUDA build for your GPU:
 pip install torch --index-url https://download.pytorch.org/whl/cu128   # RTX 50-series needs cu128+
 pip install -r requirements.txt
-# --reload-dir app: don't restart the server every time pip or a job touches venv/ or storage/
-uvicorn app.main:app --reload --reload-dir app --port 8000
+uvicorn app.main:app --port 8000
 ```
+Restart the backend by hand after editing it. On Windows, `--reload` can hang on
+"Reloading..." (the old worker never exits), leaving the port refusing connections.
+
+### Supabase (accounts + saved stems)
+
+1. Supabase dashboard → **SQL Editor** → run `supabase/migrations/0001_tracks_and_stems.sql`
+   (creates the `tracks` table, the private `stems` bucket, and row-level security).
+2. `backend/.env` from `backend/.env.example` — project URL + **secret** key (server only).
+3. `frontend/.env.local` from `frontend/.env.example` — project URL + **publishable** key.
+4. Restart both servers.
+
+Without these, the app runs in guest mode: uploads are processed but not saved.
 
 Frontend (Node 18+):
 ```bash

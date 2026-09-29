@@ -52,7 +52,7 @@ class StemSeparator:
         return list(self._separator.model.sources)
 
     def separate(self, input_path: Path, out_dir: Path, on_progress=None) -> list[dict]:
-        """Split `input_path` into one WAV per stem in `out_dir`.
+        """Split `input_path` into one FLAC per stem in `out_dir`.
 
         on_progress(fraction 0..1) is called as chunks finish.
         Returns [{"name": stem, "file": filename}, ...].
@@ -64,9 +64,11 @@ class StemSeparator:
             except LoadAudioError as e:
                 raise ValueError("Couldn't decode this audio file — it may be corrupt or empty") from e
 
+        # FLAC: lossless like WAV at roughly half the size, which keeps a
+        # 5-minute stem under Supabase's 50 MB per-file limit.
         results = []
         for name, wav in separated.items():
-            filename = f"{name}.wav"
+            filename = f"{name}.flac"
             save_audio(wav.cpu(), out_dir / filename, samplerate=self._separator.samplerate)
             results.append({"name": name, "file": filename})
         return results
@@ -88,7 +90,8 @@ def _progress_callback(on_progress):
 
 # ---------------------------------------------------------------- job entry point
 # Same signature as mock.run_stem_separation so main.py can swap between them.
-def run_stem_separation(job_id: str, input_path: Path) -> None:
+# finalize(stems), if given, runs before the job is marked done (e.g. saving to Supabase).
+def run_stem_separation(job_id: str, input_path: Path, finalize=None) -> None:
     out = jobs.job_dir(job_id) / "output"
 
     def update(progress: float, message: str):
@@ -104,6 +107,9 @@ def run_stem_separation(job_id: str, input_path: Path) -> None:
         out,
         on_progress=lambda f: update(0.05 + 0.85 * f, f"Separating stems ({f:.0%})"),
     )
+    if finalize:
+        update(0.92, "Saving to your library")
+        finalize(stems)
 
     jobs.update_job(
         job_id,

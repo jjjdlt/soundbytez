@@ -1,74 +1,62 @@
 /**
- * MOCK auth — localStorage only, no server. Swap for Supabase later.
- *
- * The surface intentionally mirrors supabase-js so the swap is mechanical:
- *   signUp({ email, password })             -> supabase.auth.signUp(...)
- *   signIn({ email, password })             -> supabase.auth.signInWithPassword(...)
- *   signOut()                               -> supabase.auth.signOut()
- *   session restore on load                 -> supabase.auth.getSession() + onAuthStateChange
- *
- * Passwords are SHA-256 hashed before being stored, but this is still NOT secure —
- * anything in localStorage is readable by any script on the page. Dev only.
+ * Supabase email/password auth. The session is persisted by supabase-js (in
+ * localStorage) and refreshed automatically, so returning users stay signed in.
  */
-import { createContext, useContext, useState } from "react";
-
-const USERS_KEY = "sbz.mock.users";     // { [email]: { id, email, passwordHash, createdAt } }
-const SESSION_KEY = "sbz.mock.session"; // { user: { id, email } }
-
-const read = (key, fallback) => {
-  try {
-    return JSON.parse(localStorage.getItem(key)) ?? fallback;
-  } catch {
-    return fallback;
-  }
-};
-const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
-
-async function hash(text) {
-  const bytes = new TextEncoder().encode(text);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
-}
+import { createContext, useContext, useEffect, useState } from "react";
+import { supabase } from "./supabase";
 
 const AuthContext = createContext(null);
 
+const requireSupabase = () => {
+  if (!supabase) throw new Error("Accounts aren't configured yet (missing Supabase env vars)");
+  return supabase;
+};
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => read(SESSION_KEY, null)?.user ?? null);
+  const [session, setSession] = useState(null);
+  const [ready, setReady] = useState(!supabase);
 
-  const startSession = (u) => {
-    const publicUser = { id: u.id, email: u.email };
-    write(SESSION_KEY, { user: publicUser });
-    setUser(publicUser);
-  };
+  useEffect(() => {
+    if (!supabase) return;
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setReady(true);
+    });
+    const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
+    return () => data.subscription.unsubscribe();
+  }, []);
 
+  /** Resolves to { needsConfirmation: true } when the project requires email confirmation. */
   const signUp = async ({ email, password }) => {
-    email = email.trim().toLowerCase();
-    if (!email.includes("@")) throw new Error("Enter a valid email");
-    if (password.length < 6) throw new Error("Password must be at least 6 characters");
-    const users = read(USERS_KEY, {});
-    if (users[email]) throw new Error("An account with that email already exists");
-    const u = { id: crypto.randomUUID(), email, passwordHash: await hash(password), createdAt: Date.now() };
-    write(USERS_KEY, { ...users, [email]: u });
-    startSession(u);
+    const { data, error } = await requireSupabase().auth.signUp({
+      email: email.trim(),
+      password,
+      options: { emailRedirectTo: window.location.origin },
+    });
+    if (error) throw error;
+    return { needsConfirmation: !data.session };
   };
 
   const signIn = async ({ email, password }) => {
-    email = email.trim().toLowerCase();
-    const u = read(USERS_KEY, {})[email];
-    if (!u || u.passwordHash !== (await hash(password))) throw new Error("Invalid email or password");
-    startSession(u);
+    const { error } = await requireSupabase().auth.signInWithPassword({ email: email.trim(), password });
+    if (error) throw error;
   };
 
-  const signOut = () => {
-    localStorage.removeItem(SESSION_KEY);
-    setUser(null);
+  const signOut = () => supabase?.auth.signOut();
+
+  const value = {
+    user: session?.user ?? null,
+    accessToken: session?.access_token ?? null,
+    ready,
+    enabled: !!supabase,
+    signUp,
+    signIn,
+    signOut,
   };
 
-  return (
-    <AuthContext.Provider value={{ user, signUp, signIn, signOut }}>
-      {children}
-    </AuthContext.Provider>
-  );
+  // Hold rendering until the stored session is read, so returning users
+  // don't see a flash of the logged-out landing page.
+  return <AuthContext.Provider value={value}>{ready ? children : null}</AuthContext.Provider>;
 }
 
 export const useAuth = () => useContext(AuthContext);
