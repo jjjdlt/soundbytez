@@ -88,7 +88,8 @@ function Dashboard({ user }) {
             if (job.status === "done") updateEntry(user.id, jobId, { stems: job.result.stems.length });
             if (job.status === "error") updateEntry(user.id, jobId, { stems: "error" });
           })
-          .catch(() => !cancelled && updateEntry(user.id, jobId, { stems: "missing" })),
+          // 404 = job gone from the server; anything else (e.g. backend down) just retries next tick
+          .catch((e) => !cancelled && e.message.includes("404") && updateEntry(user.id, jobId, { stems: "missing" })),
       );
     check();
     const t = setInterval(check, 2000);
