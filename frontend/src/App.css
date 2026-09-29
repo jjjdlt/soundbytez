@@ -1,0 +1,65 @@
+/* skeleton styles — just enough to see structure */
+:root {
+  --bg: #141417;
+  --panel: #1d1d22;
+  --line: #2c2c33;
+  --text: #e8e6e1;
+  --muted: #8a8894;
+  --accent: #7bd88f;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: ui-monospace, monospace; }
+
+.topnav { display: flex; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--line); }
+.topnav a { color: var(--muted); text-decoration: none; }
+.topnav .brand { color: var(--text); font-weight: bold; }
+
+.screen { max-width: 720px; margin: 40px auto; padding: 0 20px; }
+.muted { color: var(--muted); }
+
+.tool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 24px; }
+.tool-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+  padding: 32px 12px; text-align: center; color: var(--text); text-decoration: none;
+}
+.tool-card:hover { border-color: var(--accent); }
+
+.dropzone {
+  border: 2px dashed var(--line); border-radius: 8px; padding: 48px;
+  text-align: center; cursor: pointer; color: var(--muted); margin: 16px 0;
+}
+.dropzone.drag { border-color: var(--accent); color: var(--text); }
+
+.job-progress { margin: 24px 0; }
+.bar-track { height: 8px; background: var(--panel); border-radius: 4px; overflow: hidden; }
+.bar-fill { height: 100%; background: var(--accent); transition: width 0.3s; }
+.job-msg { font-size: 13px; color: var(--muted); }
+
+.error-box { background: #3a1d1d; border: 1px solid #6e2c2c; padding: 12px; border-radius: 6px; margin: 12px 0; }
+
+.results { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+.stem-row { display: flex; align-items: center; gap: 12px; background: var(--panel); padding: 8px 12px; border-radius: 6px; }
+.stem-name { width: 70px; }
+.stem-row audio { flex: 1; height: 36px; }
+.stem-row a, .results a { color: var(--accent); }
+
+.btn {
+  background: var(--panel); border: 1px solid var(--accent); color: var(--accent);
+  padding: 10px 18px; border-radius: 6px; cursor: pointer; width: fit-content;
+  font-family: inherit; text-decoration: none;
+}
+.btn:disabled { border-color: var(--line); color: var(--muted); cursor: not-allowed; }
+
+.lyrics-input {
+  width: 100%; background: var(--panel); border: 1px solid var(--line);
+  color: var(--text); border-radius: 6px; padding: 12px; font-family: inherit; margin: 8px 0;
+}
+
+.piano-roll { position: relative; background: var(--panel); border-radius: 6px; overflow: hidden; }
+.pr-note { position: absolute; height: 10px; background: var(--accent); border-radius: 2px; }
+
+.karaoke { background: var(--panel); padding: 16px; border-radius: 6px; line-height: 2; }
+.word { color: var(--muted); }
+.word.active { color: var(--accent); font-weight: bold; }
+
+.notation-placeholder { border: 1px dashed var(--line); border-radius: 6px; padding: 24px; text-align: center; }

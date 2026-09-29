@@ -1,0 +1,10 @@
+# ---- Milestone 1 (lightweight) ----
+fastapi>=0.115
+uvicorn[standard]>=0.30
+python-multipart>=0.0.9
+
+# ---- Milestone 2+ (HEAVY — do not install until needed, see README) ----
+# demucs            # ~ pulls torch/torchaudio; htdemucs_ft weights ~1GB on first run
+# basic-pitch       # pulls tensorflow OR use basic-pitch[onnx] for lighter ONNX runtime
+# whisperx          # pulls torch + faster-whisper; model weights 150MB–3GB depending on size
+# music21           # pure python, light — safe to install anytime
