@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from fastapi import BackgroundTasks, FastAPI, File, Form, HTTPException, UploadFile
@@ -6,6 +7,13 @@ from fastapi.responses import FileResponse
 
 from . import jobs
 from .processors import mock
+
+# Real processors are optional heavy installs; fall back to mocks without them.
+try:
+    from .processors.stem_separation import run_stem_separation
+except ImportError as e:
+    logging.getLogger("uvicorn.error").warning("Demucs unavailable (%s) — using mock stem separation", e)
+    run_stem_separation = mock.run_stem_separation
 
 app = FastAPI(title="soundbytez API")
 
@@ -31,6 +39,8 @@ def _validate_audio(file: UploadFile):
     ext = Path(file.filename or "").suffix.lower()
     if ext not in ALLOWED_AUDIO_EXT:
         raise HTTPException(400, f"Unsupported file type '{ext}'. Allowed: {sorted(ALLOWED_AUDIO_EXT)}")
+    if file.size == 0:
+        raise HTTPException(400, "That file is empty")
 
 
 def _run_safely(fn, job_id: str, *args):
@@ -46,7 +56,7 @@ async def create_stem_job(background: BackgroundTasks, file: UploadFile = File(.
     _validate_audio(file)
     job = jobs.create_job(jobs.JobType.STEM_SEPARATION, file.filename)
     input_path = _save_upload(job, file)
-    background.add_task(_run_safely, mock.run_stem_separation, job["job_id"], input_path)
+    background.add_task(_run_safely, run_stem_separation, job["job_id"], input_path)
     return {"job_id": job["job_id"]}
 
 

@@ -4,13 +4,15 @@ const STEM_COLORS = {
   vocals: "#e0479e",
   drums: "#f0932b",
   bass: "#3f86e0",
+  guitar: "#e5c643",
+  piano: "#a879e6",
   other: "#2ec4b6",
 };
 const BAR_COUNT = 140;
 
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
-/** Downsample a buffer to BAR_COUNT peak heights in 0..1. */
+/** Downsample a buffer to BAR_COUNT raw peak amplitudes. */
 function computePeaks(buffer) {
   const data = buffer.getChannelData(0);
   const step = Math.floor(data.length / BAR_COUNT) || 1;
@@ -23,8 +25,13 @@ function computePeaks(buffer) {
     }
     peaks.push(max);
   }
-  const top = Math.max(...peaks, 0.01);
-  return peaks.map((p) => Math.max(p / top, 0.04));
+  return peaks;
+}
+
+/** Scale every lane against the loudest stem so a quiet stem *looks* quiet. */
+function normalizePeaks(lanes) {
+  const top = Math.max(...lanes.flat(), 0.01);
+  return lanes.map((peaks) => peaks.map((p) => Math.max(p / top, 0.04)));
 }
 
 /**
@@ -146,7 +153,7 @@ export function StemPlayer({ stems, title }) {
   const engine = useStemEngine(stems);
   const [muted, setMuted] = useState(() => new Set());
   const [soloed, setSoloed] = useState(() => new Set());
-  const peaks = useMemo(() => engine.buffers?.map(computePeaks), [engine.buffers]);
+  const peaks = useMemo(() => engine.buffers && normalizePeaks(engine.buffers.map(computePeaks)), [engine.buffers]);
 
   // solo wins over mute; if nothing is soloed, everything not muted plays
   const audible = stems.map((s) => (soloed.size ? soloed.has(s.name) : !muted.has(s.name)));

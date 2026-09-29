@@ -12,8 +12,11 @@ Backend (Python 3.10+):
 cd backend
 python3 -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
+# Real stem separation (Demucs) needs torch installed FIRST, with the CUDA build for your GPU:
+pip install torch --index-url https://download.pytorch.org/whl/cu128   # RTX 50-series needs cu128+
 pip install -r requirements.txt
-uvicorn app.main:app --reload --port 8000
+# --reload-dir app: don't restart the server every time pip or a job touches venv/ or storage/
+uvicorn app.main:app --reload --reload-dir app --port 8000
 ```
 
 Frontend (Node 18+):

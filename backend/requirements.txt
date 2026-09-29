@@ -3,8 +3,14 @@ fastapi>=0.115
 uvicorn[standard]>=0.30
 python-multipart>=0.0.9
 
-# ---- Milestone 2+ (HEAVY — do not install until needed, see README) ----
-# demucs            # ~ pulls torch/torchaudio; htdemucs_ft weights ~1GB on first run
+# ---- Milestone 2: stem separation (HEAVY) ----
+# Install torch FIRST with the CUDA build for your GPU, or pip pulls a CPU-only build:
+#   pip install torch --index-url https://download.pytorch.org/whl/cu128   (RTX 50-series needs cu128+)
+# Without demucs installed the backend falls back to mock stems.
+demucs>=4.1         # htdemucs_ft weights (~300MB) download from Hugging Face on first job
+numpy               # demucs imports it but doesn't declare it
+
+# ---- Milestone 3+ (HEAVY — do not install until needed, see README) ----
 # basic-pitch       # pulls tensorflow OR use basic-pitch[onnx] for lighter ONNX runtime
 # whisperx          # pulls torch + faster-whisper; model weights 150MB–3GB depending on size
 # music21           # pure python, light — safe to install anytime

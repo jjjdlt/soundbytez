@@ -212,6 +212,10 @@ export function Login() {
 }
 
 // ------------------------------------------------------------------ Track (stem results)
+// Display order, top to bottom; unknown stems (e.g. from other models) go last.
+const STEM_ORDER = ["vocals", "drums", "bass", "guitar", "piano", "other"];
+const stemRank = (name) => (STEM_ORDER.includes(name) ? STEM_ORDER.indexOf(name) : STEM_ORDER.length);
+
 export function Track() {
   const { jobId } = useParams();
   const { state } = useLocation();
@@ -234,7 +238,12 @@ export function Track() {
 
   const done = job?.status === "done";
   const stems = useMemo(
-    () => (done ? job.result.stems.map((s) => ({ name: s.name, url: fileUrl(jobId, s.file) })) : null),
+    () =>
+      done
+        ? [...job.result.stems]
+            .sort((a, b) => stemRank(a.name) - stemRank(b.name))
+            .map((s) => ({ name: s.name, url: fileUrl(jobId, s.file) }))
+        : null,
     [done, job, jobId],
   );
   const title = state?.name ?? (user && getLibrary(user.id).find((e) => e.jobId === jobId)?.name) ?? "untitled";
