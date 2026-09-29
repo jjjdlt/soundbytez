@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 
-export function Dropzone({ onFile, accept = "audio/*" }) {
+export function Dropzone({ onFile, accept = "audio/*", className = "", children }) {
   const inputRef = useRef();
   const [drag, setDrag] = useState(false);
 
@@ -8,13 +8,13 @@ export function Dropzone({ onFile, accept = "audio/*" }) {
 
   return (
     <div
-      className={`dropzone ${drag ? "drag" : ""}`}
+      className={`dropzone ${drag ? "drag" : ""} ${className}`}
       onClick={() => inputRef.current.click()}
       onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
       onDragLeave={() => setDrag(false)}
       onDrop={(e) => { e.preventDefault(); setDrag(false); handleFiles(e.dataTransfer.files); }}
     >
-      <p>Drop an audio file here, or click to browse</p>
+      {children ?? <p>Drop an audio file here, or click to browse</p>}
       <input
         ref={inputRef}
         type="file"
