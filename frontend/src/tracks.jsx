@@ -3,19 +3,52 @@
  * private `stems` bucket. RLS scopes every query here to the current user.
  * The backend writes rows/files; the browser only reads and deletes.
  */
-import { useCallback, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { getLimits } from "./api";
+import { useAuth } from "./auth";
 import { supabase } from "./supabase";
 
 const BUCKET = "stems";
 const URL_TTL_SECONDS = 60 * 60;
 
+const TracksContext = createContext(null);
+
+/**
+ * Shares the signed-in user's tracks and storage usage app-wide, so the header's
+ * upload button and the dashboard agree on whether the user is out of space.
+ */
+export function TracksProvider({ children }) {
+  const { user } = useAuth();
+  const { tracks, error, refresh } = useTrackList(user?.id);
+  const [quota, setQuota] = useState(null);
+
+  useEffect(() => {
+    getLimits()
+      .then((l) => setQuota(l.user_quota_bytes))
+      .catch(() => setQuota(null)); // backend down: show usage without a limit
+  }, []);
+
+  // Processing tracks already hold their estimated size (reserved by the backend).
+  const used = tracks.reduce((sum, t) => sum + (t.size_bytes ?? 0), 0);
+  const storage = { used, quota, full: quota != null && used >= quota };
+
+  return (
+    <TracksContext.Provider value={{ tracks, error, refresh, storage }}>{children}</TracksContext.Provider>
+  );
+}
+
+export const useTracks = () => useContext(TracksContext);
+
 /** Live list of the user's tracks. Polls while anything is still processing. */
-export function useTracks(userId) {
+function useTrackList(userId) {
   const [tracks, setTracks] = useState([]);
   const [error, setError] = useState(null);
 
   const refresh = useCallback(async () => {
-    if (!supabase || !userId) return;
+    if (!supabase || !userId) {
+      setTracks([]);
+      return;
+    }
     const { data, error } = await supabase.from("tracks").select("*").order("created_at", { ascending: false });
     if (error) setError(error.message);
     else {

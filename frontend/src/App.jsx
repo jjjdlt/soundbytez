@@ -2,12 +2,14 @@ import { useRef, useState } from "react";
 import { BrowserRouter, Routes, Route, Link, useNavigate } from "react-router-dom";
 import { Home, Login, Track, GuestJob, MidiGrabber, LyricCast } from "./screens";
 import { AuthProvider, useAuth } from "./auth";
+import { TracksProvider, useTracks } from "./tracks";
 import { useUpload } from "./upload";
 import "./App.css";
 
 function Header() {
   const { user, signOut } = useAuth();
   const { upload, uploading, error, clearError } = useUpload();
+  const { storage } = useTracks();
   const navigate = useNavigate();
   const inputRef = useRef();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -18,8 +20,13 @@ function Header() {
 
       {user && (
         <>
-          <button className="topbar-box upload-btn" disabled={uploading} onClick={() => inputRef.current.click()}>
-            {uploading ? "uploading…" : "+ upload"}
+          <button
+            className="topbar-box upload-btn"
+            disabled={uploading || storage.full}
+            title={storage.full ? "Storage full — delete a track to upload more" : undefined}
+            onClick={() => inputRef.current.click()}
+          >
+            {uploading ? "uploading…" : storage.full ? "storage full" : "+ upload"}
           </button>
           <input
             ref={inputRef}
@@ -73,17 +80,19 @@ function Header() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <Header />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/track/:trackId" element={<Track />} />
-          <Route path="/job/:jobId" element={<GuestJob />} />
-          <Route path="/midi" element={<MidiGrabber />} />
-          <Route path="/lyrics" element={<LyricCast />} />
-        </Routes>
-      </BrowserRouter>
+      <TracksProvider>
+        <BrowserRouter>
+          <Header />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/track/:trackId" element={<Track />} />
+            <Route path="/job/:jobId" element={<GuestJob />} />
+            <Route path="/midi" element={<MidiGrabber />} />
+            <Route path="/lyrics" element={<LyricCast />} />
+          </Routes>
+        </BrowserRouter>
+      </TracksProvider>
     </AuthProvider>
   );
 }

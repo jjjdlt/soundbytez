@@ -35,7 +35,7 @@ function useJobFlow(jobType) {
 // ------------------------------------------------------------------ Home
 export function Home() {
   const { user } = useAuth();
-  return user ? <Dashboard user={user} /> : <Landing />;
+  return user ? <Dashboard /> : <Landing />;
 }
 
 /** New / logged-out visitors: one big drop target. */
@@ -67,12 +67,15 @@ const stemsLabel = (t) =>
   t.status === "done" ? `${t.stems.length}/${t.stems.length}` : t.status === "error" ? "failed" : "processing…";
 
 /** Returning users: their saved tracks. */
-function Dashboard({ user }) {
-  const { tracks, error, refresh } = useTracks(user.id);
+function Dashboard() {
+  const { tracks, error, refresh, storage } = useTracks();
   const [deleteError, setDeleteError] = useState(null);
   const stemTracks = tracks.filter((t) => t.type === "stem_separation");
-  const storageUsed = tracks.reduce((sum, t) => sum + (t.size_bytes ?? 0), 0);
   const midiCount = tracks.filter((t) => t.type === "midi_transcription").length;
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const remove = async (track) => {
     if (!confirm(`Delete ${track.name}? This removes its stems permanently.`)) return;
@@ -122,9 +125,34 @@ function Dashboard({ user }) {
       </table>
 
       <footer className="dash-stats">
-        <span>Storage used: <strong>{formatBytes(storageUsed)}</strong></span>
+        <StorageMeter {...storage} />
         <span>MIDI files generated: <strong>{midiCount}</strong></span>
       </footer>
+    </div>
+  );
+}
+
+/** "69 MB of 500 MB" plus a bar that turns amber at 80% and red when full. */
+function StorageMeter({ used, quota, full }) {
+  if (quota == null) return <span>Storage used: <strong>{formatBytes(used)}</strong></span>;
+  const pct = Math.min(used / quota, 1);
+  const level = full ? "full" : pct >= 0.8 ? "warn" : "";
+  return (
+    <div className={`storage-meter ${level}`}>
+      <span>
+        Storage used: <strong>{formatBytes(used)}</strong> of {formatBytes(quota)}
+        {full && <span className="storage-full-note"> — full, delete a track to upload more</span>}
+      </span>
+      <div
+        className="storage-track"
+        role="progressbar"
+        aria-label="Storage used"
+        aria-valuemin={0}
+        aria-valuemax={quota}
+        aria-valuenow={used}
+      >
+        <div className="storage-fill" style={{ width: `${pct * 100}%` }} />
+      </div>
     </div>
   );
 }

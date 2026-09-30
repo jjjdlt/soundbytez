@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createJob } from "./api";
 import { useAuth } from "./auth";
+import { useTracks } from "./tracks";
 
 /**
  * Upload a file for stem separation and jump to its page: the saved track for
@@ -9,6 +10,7 @@ import { useAuth } from "./auth";
  */
 export function useUpload() {
   const { accessToken } = useAuth();
+  const { refresh } = useTracks();
   const navigate = useNavigate();
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState(null);
@@ -18,6 +20,7 @@ export function useUpload() {
     setUploading(true);
     try {
       const { jobId, trackId } = await createJob("stem_separation", file, {}, accessToken);
+      if (trackId) refresh(); // storage now includes this track's reserved estimate
       navigate(trackId ? `/track/${trackId}` : `/job/${jobId}`, { state: { name: file.name } });
     } catch (e) {
       setError(e.message);

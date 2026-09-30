@@ -27,6 +27,13 @@ export async function createJob(jobType, file, extraFields = {}, accessToken = n
   return { jobId: job_id, trackId: track_id };
 }
 
+/** Server-side limits, e.g. { user_quota_bytes }. */
+export async function getLimits() {
+  const res = await apiFetch(`${API}/api/limits`);
+  if (!res.ok) throw new Error(`Limits lookup failed (${res.status})`);
+  return res.json();
+}
+
 export async function getJob(jobId) {
   const res = await apiFetch(`${API}/api/jobs/${jobId}`);
   if (!res.ok) throw new Error(`Job lookup failed (${res.status})`);

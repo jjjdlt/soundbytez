@@ -6,7 +6,7 @@ from fastapi import BackgroundTasks, FastAPI, File, Form, Header, HTTPException,
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
-from . import jobs, supabase_store
+from . import jobs, quota, supabase_store
 from .processors import mock
 
 log = logging.getLogger("uvicorn.error")
@@ -87,6 +87,12 @@ def _run_saved_stem_job(job_id: str, input_path: Path, user_id: str, track_id: s
     shutil.rmtree(jobs.job_dir(job_id), ignore_errors=True)
 
 
+@app.get("/api/limits")
+async def get_limits():
+    """Public limits the dashboard displays (enforcement happens on upload)."""
+    return {"user_quota_bytes": quota.USER_QUOTA_BYTES}
+
+
 # ---------------------------------------------------------------- job creation
 @app.post("/api/jobs/stem_separation")
 async def create_stem_job(
@@ -100,7 +106,22 @@ async def create_stem_job(
     input_path = _save_upload(job, file)
 
     if user_id:
-        track_id = supabase_store.create_track(user_id, file.filename, job["job_id"])
+        try:
+            estimate = quota.estimate_stem_bytes(input_path)
+        except ValueError as e:
+            shutil.rmtree(jobs.job_dir(job["job_id"]), ignore_errors=True)
+            raise HTTPException(400, str(e)) from e
+        # Check-then-reserve has no await in between, so on this single-process
+        # server two uploads from the same user can't both pass the check.
+        free = quota.USER_QUOTA_BYTES - supabase_store.used_bytes(user_id)
+        if estimate > free:
+            shutil.rmtree(jobs.job_dir(job["job_id"]), ignore_errors=True)
+            raise HTTPException(
+                403,
+                f"Not enough storage: this song's stems need about {quota.format_mb(estimate)}, "
+                f"you have {quota.format_mb(max(free, 0))} left. Delete a track to make room.",
+            )
+        track_id = supabase_store.create_track(user_id, file.filename, job["job_id"], estimate)
         background.add_task(_run_saved_stem_job, job["job_id"], input_path, user_id, track_id)
         return {"job_id": job["job_id"], "track_id": track_id}
 

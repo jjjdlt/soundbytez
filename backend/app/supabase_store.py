@@ -44,10 +44,28 @@ def user_id_from_token(access_token: str) -> str | None:
     return res.user.id if res and res.user else None
 
 
-def create_track(user_id: str, name: str, job_id: str, track_type: str = "stem_separation") -> str:
+def used_bytes(user_id: str) -> int:
+    """Bytes counted against the user's quota: finished tracks at their real size,
+    in-progress tracks at their estimate. Failed tracks store 0."""
+    rows = _client.table("tracks").select("size_bytes").eq("user_id", user_id).execute().data
+    return sum(r["size_bytes"] for r in rows)
+
+
+def create_track(
+    user_id: str, name: str, job_id: str, estimated_bytes: int, track_type: str = "stem_separation"
+) -> str:
     row = (
         _client.table("tracks")
-        .insert({"user_id": user_id, "name": name, "job_id": job_id, "type": track_type})
+        .insert(
+            {
+                "user_id": user_id,
+                "name": name,
+                "job_id": job_id,
+                "type": track_type,
+                # Reserve the estimate so concurrent uploads can't overshoot the quota.
+                "size_bytes": estimated_bytes,
+            }
+        )
         .execute()
     )
     return row.data[0]["id"]
@@ -73,4 +91,7 @@ def finish_track(track_id: str, stems: list[dict]) -> None:
 
 
 def fail_track(track_id: str, error: str) -> None:
-    _client.table("tracks").update({"status": "error", "error": error}).eq("id", track_id).execute()
+    # Nothing was stored, so release the quota reservation.
+    _client.table("tracks").update({"status": "error", "error": error, "size_bytes": 0}).eq(
+        "id", track_id
+    ).execute()
