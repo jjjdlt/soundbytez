@@ -149,7 +149,11 @@ function useStemEngine(stems) {
   return { buffers, loadError, playing, time, duration, toggle, seek, setGains };
 }
 
-export function StemPlayer({ stems, title }) {
+/**
+ * `panel`, if given, is rendered in place of the stem lanes as
+ * panel({ time, seek }) — playback and mute/solo state carry on underneath.
+ */
+export function StemPlayer({ stems, title, panel = null }) {
   const engine = useStemEngine(stems);
   const [muted, setMuted] = useState(() => new Set());
   const [soloed, setSoloed] = useState(() => new Set());
@@ -183,7 +187,8 @@ export function StemPlayer({ stems, title }) {
 
   return (
     <div className="stem-player">
-      {stems.map((s, i) => {
+      {panel && <div className="stem-panel">{panel({ time: engine.time, seek: engine.seek })}</div>}
+      {!panel && stems.map((s, i) => {
         const color = STEM_COLORS[s.name] ?? "#9b8cff";
         return (
           <div key={s.name} className={`stem-lane ${audible[i] ? "" : "silent"}`}>

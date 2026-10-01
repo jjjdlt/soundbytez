@@ -84,6 +84,20 @@ def upload_stems(user_id: str, track_id: str, stems: list[dict], out_dir: Path) 
     return stored
 
 
+def get_track(track_id: str) -> dict | None:
+    try:
+        rows = _client.table("tracks").select("*").eq("id", track_id).execute().data
+    except Exception:  # noqa: BLE001 — e.g. a malformed uuid
+        return None
+    return rows[0] if rows else None
+
+
+def signed_stem_urls(track: dict, expires_in: int = 300) -> list[str]:
+    """Short-lived URLs for a track's stem files, for server-side reads (ffmpeg)."""
+    paths = [s["path"] for s in track["stems"]]
+    return [u["signedURL"] for u in _client.storage.from_(BUCKET).create_signed_urls(paths, expires_in)]
+
+
 def finish_track(track_id: str, stems: list[dict]) -> None:
     _client.table("tracks").update(
         {"status": "done", "stems": stems, "size_bytes": sum(s["size"] for s in stems)}

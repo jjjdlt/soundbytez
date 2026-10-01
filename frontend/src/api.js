@@ -58,5 +58,21 @@ export function pollJob(jobId, onUpdate, intervalMs = 1000) {
   });
 }
 
-export const fileUrl = (jobId, filename) => `${API}/api/jobs/${jobId}/files/${filename}`;
+async function getLyrics(url, headers) {
+  const res = await apiFetch(url, { headers });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.detail || `Lyrics lookup failed (${res.status})`);
+  }
+  return res.json();
+}
+
+/** { track, lyrics: { synced, lines: [{ time, text }] } | null, instrumental } for a saved track. */
+export const getTrackLyrics = (trackId, accessToken) =>
+  getLyrics(`${API}/api/tracks/${trackId}/lyrics`, { Authorization: `Bearer ${accessToken}` });
+
+/** Same shape, for a guest's stem job. */
+export const getJobLyrics = (jobId) => getLyrics(`${API}/api/jobs/${jobId}/lyrics`);
+
+export const fileUrl =(jobId, filename) => `${API}/api/jobs/${jobId}/files/${filename}`;
 export const inputUrl = (jobId) => `${API}/api/jobs/${jobId}/input`;

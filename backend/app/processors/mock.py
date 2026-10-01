@@ -6,9 +6,10 @@ Each mock sleeps to simulate work and writes REAL files (playable wavs, a valid
 Milestones 2-4 replace these one at a time with:
   - stem_separation.py   (Demucs htdemucs_ft)
   - midi_transcription.py (Basic Pitch)
-  - lyric_alignment.py    (Whisper/WhisperX)
   - midi_to_musicxml.py   (music21)
 Keep the same function signatures so main.py doesn't change.
+
+Lyric Cast has no mock: lyric_lookup.py (AcoustID + LRCLIB) is light enough to always run.
 """
 import json
 import shutil
@@ -78,54 +79,3 @@ def run_midi_transcription(job_id: str, input_path: Path) -> None:
     )
 
 
-# ---------------------------------------------------------------- lyric alignment
-def run_lyric_alignment(job_id: str, input_path: Path, lyrics_text: str) -> None:
-    out = jobs.job_dir(job_id) / "output"
-    _tick(job_id, 0.2, "Transcribing vocal (mock)")
-    _tick(job_id, 0.6, "Aligning words (mock)")
-    words = lyrics_text.split()
-    # Mock: spread words evenly over a fake 30s duration
-    duration = 30.0
-    step = duration / max(len(words), 1)
-    alignment = [
-        {"word": w, "start_time": round(i * step, 3), "end_time": round((i + 1) * step - 0.05, 3)}
-        for i, w in enumerate(words)
-    ]
-    (out / "alignment.json").write_text(json.dumps(alignment))
-    # Placeholder MusicXML slot — milestone 4 fills this via music21.
-    (out / "melody.musicxml").write_text(_PLACEHOLDER_MUSICXML)
-    # Also run the (mock) transcription so Lyric Cast has both artifacts
-    _write_minimal_midi(out / "melody.mid")
-    jobs.update_job(
-        job_id,
-        status=jobs.JobStatus.DONE,
-        progress=1.0,
-        message="Done",
-        result={
-            "alignment_file": "alignment.json",
-            "musicxml_file": "melody.musicxml",
-            "midi_file": "melody.mid",
-            "word_count": len(words),
-        },
-    )
-
-
-_PLACEHOLDER_MUSICXML = """<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 4.0 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
-<score-partwise version="4.0">
-  <part-list><score-part id="P1"><part-name>Vocal</part-name></score-part></part-list>
-  <part id="P1">
-    <measure number="1">
-      <attributes>
-        <divisions>1</divisions><key><fifths>0</fifths></key>
-        <time><beats>4</beats><beat-type>4</beat-type></time>
-        <clef><sign>G</sign><line>2</line></clef>
-      </attributes>
-      <note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note>
-      <note><pitch><step>E</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note>
-      <note><pitch><step>G</step><octave>4</octave></pitch><duration>1</duration><type>quarter</type></note>
-      <note><pitch><step>C</step><octave>5</octave></pitch><duration>1</duration><type>quarter</type></note>
-    </measure>
-  </part>
-</score-partwise>
-"""

@@ -30,6 +30,15 @@ Restart the backend by hand after editing it. On Windows, `--reload` can hang on
 
 Without these, the app runs in guest mode: uploads are processed but not saved.
 
+### Lyric Cast (song ID + synced lyrics)
+
+`/lyrics` fingerprints the upload with ffmpeg's Chromaprint muxer, identifies it
+via [AcoustID](https://acoustid.org/webservice), then pulls LRC synced lyrics from
+[LRCLIB](https://lrclib.net/docs). Set `ACOUSTID_API_KEY` in `backend/.env` (an
+application key — free for non-commercial use). ffmpeg must be built with
+`--enable-chromaprint` (the gyan.dev "full" Windows build is); check with
+`ffmpeg -muxers | grep chromaprint`.
+
 Frontend (Node 18+):
 ```bash
 cd frontend
@@ -45,7 +54,9 @@ CORS is preconfigured for localhost:5173 → localhost:8000.
 |---|---|---|
 | `/api/jobs/stem_separation` | POST | multipart `file` → `{job_id}` |
 | `/api/jobs/midi_transcription` | POST | multipart `file` → `{job_id}` |
-| `/api/jobs/lyric_alignment` | POST | multipart `file` + form `lyrics` → `{job_id}` |
+| `/api/jobs/lyric_alignment` | POST | multipart `file` → `{job_id}`; result is `{track, lyrics: {synced, lines: [{time, text}]}, instrumental}` |
+| `/api/tracks/{track_id}/lyrics` | GET | Bearer token; same result shape, song identified from the saved stems |
+| `/api/jobs/{job_id}/lyrics` | GET | same, for a guest's stem job (identified from the original upload) |
 | `/api/jobs/{job_id}` | GET | `{status, progress, message, result, error}` |
 | `/api/jobs/{job_id}/files/{filename}` | GET | serves output files |
 | `/api/jobs/{job_id}/input` | GET | serves the original upload (Lyric Cast playback) |

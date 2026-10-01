@@ -2,12 +2,13 @@ import logging
 import shutil
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, File, Form, Header, HTTPException, UploadFile
+from fastapi import BackgroundTasks, FastAPI, File, Header, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from . import jobs, quota, supabase_store
 from .processors import mock
+from .processors.lyric_lookup import lookup as lyric_lookup, run_lyric_lookup
 
 log = logging.getLogger("uvicorn.error")
 
@@ -140,18 +141,58 @@ async def create_midi_job(background: BackgroundTasks, file: UploadFile = File(.
 
 
 @app.post("/api/jobs/lyric_alignment")
-async def create_lyric_job(
-    background: BackgroundTasks,
-    file: UploadFile = File(...),
-    lyrics: str = Form(...),
-):
+async def create_lyric_job(background: BackgroundTasks, file: UploadFile = File(...)):
     _validate_audio(file)
-    if not lyrics.strip():
-        raise HTTPException(400, "Lyrics text is required")
-    job = jobs.create_job(jobs.JobType.LYRIC_ALIGNMENT, file.filename, extra={"lyrics": lyrics})
+    job = jobs.create_job(jobs.JobType.LYRIC_ALIGNMENT, file.filename)
     input_path = _save_upload(job, file)
-    background.add_task(_run_safely, mock.run_lyric_alignment, job["job_id"], input_path, lyrics)
+    background.add_task(_run_safely, run_lyric_lookup, job["job_id"], input_path)
     return {"job_id": job["job_id"]}
+
+
+# ---------------------------------------------------------------- lyrics for stem tracks
+# Plain `def` on purpose: the lookup blocks for a couple of seconds (ffmpeg +
+# two HTTP services), so FastAPI runs these in its threadpool.
+_TRACK_LYRICS: dict[str, dict] = {}  # track_id -> lookup result; a song's lyrics don't change
+
+
+def _lookup_lyrics(sources: list) -> dict:
+    try:
+        return lyric_lookup(sources)
+    except ValueError as e:
+        raise HTTPException(400, str(e)) from e
+    except RuntimeError as e:
+        raise HTTPException(502, str(e)) from e
+
+
+@app.get("/api/tracks/{track_id}/lyrics")
+def get_track_lyrics(track_id: str, authorization: str | None = Header(None)):
+    """Lyrics for a saved track. The original upload isn't kept, so the song is
+    identified from its stems mixed back together."""
+    user_id = _bearer_user(authorization)
+    if not user_id:
+        raise HTTPException(401, "Log in to view this track's lyrics")
+    track = supabase_store.get_track(track_id)
+    if not track or track["user_id"] != user_id:
+        raise HTTPException(404, "Track not found")
+    if track["status"] != "done":
+        raise HTTPException(409, "This track is still processing")
+    if track_id not in _TRACK_LYRICS:
+        _TRACK_LYRICS[track_id] = _lookup_lyrics(supabase_store.signed_stem_urls(track))
+    return _TRACK_LYRICS[track_id]
+
+
+@app.get("/api/jobs/{job_id}/lyrics")
+def get_job_lyrics(job_id: str):
+    """Lyrics for a guest's stem job, identified from the original upload."""
+    job = jobs.get_job(job_id)
+    if not job:
+        raise HTTPException(404, "Job not found")
+    path = jobs.job_dir(job_id) / "input" / job["input_filename"]
+    if not path.exists():
+        raise HTTPException(404, "Input file not found")
+    if "lyrics" not in job["extra"]:
+        job["extra"]["lyrics"] = _lookup_lyrics([path])
+    return job["extra"]["lyrics"]
 
 
 # ---------------------------------------------------------------- polling + files

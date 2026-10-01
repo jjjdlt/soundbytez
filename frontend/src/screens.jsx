@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router-dom";
-import { createJob, pollJob, fileUrl, inputUrl } from "./api";
+import { createJob, pollJob, fileUrl, inputUrl, getJobLyrics, getTrackLyrics } from "./api";
 import { useAuth } from "./auth";
 import { deleteTrack, getTrack, stemUrls, useTracks } from "./tracks";
 import { useUpload } from "./upload";
@@ -261,7 +261,8 @@ function useJob(jobId, { onError } = {}) {
 
 /** A signed-in user's saved track, played from Supabase Storage. */
 export function Track() {
-  const { trackId } = useParams();
+  const { trackId, view } = useParams();
+  const { accessToken } = useAuth();
   const { state } = useLocation();
   const [track, setTrack] = useState(null);
   const [stems, setStems] = useState(null);
@@ -303,6 +304,7 @@ export function Track() {
   }, [job?.status]);
 
   const title = track?.name ?? state?.name ?? "";
+  const lyrics = useLyrics(trackId, view === "lyrics" && !!stems, () => getTrackLyrics(trackId, accessToken));
 
   return (
     <div className="screen wide">
@@ -313,14 +315,14 @@ export function Track() {
           <JobProgress job={job ?? STARTING} />
         </>
       )}
-      {stems && <StemPlayer stems={stems} title={title} />}
+      {stems && <StemPlayer stems={stems} title={title} panel={view === "lyrics" ? lyricsPanel(lyrics) : null} />}
     </div>
   );
 }
 
 /** A guest's unsaved job, played straight from the backend. */
 export function GuestJob() {
-  const { jobId } = useParams();
+  const { jobId, view } = useParams();
   const { state } = useLocation();
   const [error, setError] = useState(null);
   const job = useJob(jobId, {
@@ -334,6 +336,7 @@ export function GuestJob() {
     [done, job, jobId],
   );
   const title = state?.name ?? "untitled";
+  const lyrics = useLyrics(jobId, view === "lyrics" && done, () => getJobLyrics(jobId));
 
   return (
     <div className="screen wide">
@@ -346,7 +349,7 @@ export function GuestJob() {
       )}
       {stems && (
         <>
-          <StemPlayer stems={stems} title={title} />
+          <StemPlayer stems={stems} title={title} panel={view === "lyrics" ? lyricsPanel(lyrics) : null} />
           <p className="muted small guest-note">
             <Link to="/login">Log in</Link> to keep your stems — guest results disappear when the server restarts.
           </p>
@@ -416,77 +419,133 @@ function PianoRollPlaceholder({ notes }) {
 }
 
 // ------------------------------------------------------------------ Lyric Cast
+// The backend identifies the song from its audio fingerprint (AcoustID) and
+// looks up time-synced lyrics for it (LRCLIB) — nothing for the user to paste.
 export function LyricCast() {
   const { job, error, running, start } = useJobFlow("lyric_alignment");
   const done = job?.status === "done";
-  const [file, setFile] = useState(null);
-  const [lyrics, setLyrics] = useState("");
-  const [alignment, setAlignment] = useState(null);
-  const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef();
+  const time = useAudioTime(audioRef);
 
-  useEffect(() => {
-    if (done && job.result.alignment_file) {
-      fetch(fileUrl(job.job_id, job.result.alignment_file))
-        .then((r) => r.json())
-        .then(setAlignment)
-        .catch(() => setAlignment(null));
-    }
-  }, [done, job]);
-
-  const activeIdx = alignment
-    ? alignment.findIndex((w) => currentTime >= w.start_time && currentTime < w.end_time)
-    : -1;
+  const seek = (t) => {
+    audioRef.current.currentTime = t;
+    audioRef.current.play();
+  };
 
   return (
     <div className="screen">
       <h2>Lyric Cast</h2>
-      {!running && !done && (
-        <>
-          <Dropzone onFile={setFile} />
-          {file && <p className="muted">selected: {file.name}</p>}
-          <textarea
-            className="lyrics-input"
-            rows={6}
-            placeholder="Paste lyrics here..."
-            value={lyrics}
-            onChange={(e) => setLyrics(e.target.value)}
-          />
-          <button
-            className="btn"
-            disabled={!file || !lyrics.trim()}
-            onClick={() => start(file, { lyrics })}
-          >
-            Align lyrics
-          </button>
-        </>
-      )}
+      {!running && <Dropzone onFile={(f) => start(f)}>{done && <p>Drop another song</p>}</Dropzone>}
       {running && <JobProgress job={job} />}
       <ErrorBox error={error} />
       {done && (
         <div className="results">
-          <audio
-            ref={audioRef}
-            controls
-            src={inputUrl(job.job_id)}
-            onTimeUpdate={(e) => setCurrentTime(e.target.currentTime)}
-          />
-          <div className="karaoke">
-            {alignment?.map((w, i) => (
-              <span key={i} className={i === activeIdx ? "word active" : "word"}>
-                {w.word}{" "}
-              </span>
-            ))}
-          </div>
-          <div className="notation-placeholder">
-            {/* Milestone 5: OpenSheetMusicDisplay renders job.result.musicxml_file here */}
-            <p className="muted">
-              [ sheet music placeholder — MusicXML ready at:{" "}
-              <a href={fileUrl(job.job_id, job.result.musicxml_file)}>melody.musicxml</a> ]
-            </p>
-          </div>
+          <audio ref={audioRef} controls src={inputUrl(job.job_id)} />
+          <LyricsView result={job.result} time={time} onSeek={seek} />
         </div>
       )}
+    </div>
+  );
+}
+
+/** An <audio> element's position, sampled every frame — timeupdate only fires
+ * ~4x a second, which makes lyric line changes visibly late. */
+function useAudioTime(audioRef) {
+  const [time, setTime] = useState(0);
+  useEffect(() => {
+    let frame;
+    const tick = () => {
+      setTime(audioRef.current?.currentTime ?? 0);
+      frame = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => cancelAnimationFrame(frame);
+  }, [audioRef]);
+  return time;
+}
+
+/** Look up lyrics for a track/job the first time they're wanted. Returns { result, error }. */
+function useLyrics(id, wanted, fetchLyrics) {
+  const [state, setState] = useState({});
+  const requested = useRef(null);
+  useEffect(() => {
+    if (!wanted || requested.current === id) return;
+    requested.current = id;
+    setState({});
+    fetchLyrics()
+      .then((result) => requested.current === id && setState({ result }))
+      .catch((e) => requested.current === id && setState({ error: e.message }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, wanted]);
+  return state;
+}
+
+/** StemPlayer `panel` render function: lyrics in place of the waveforms, synced to the stems. */
+const lyricsPanel = ({ result, error }) => ({ time, seek }) => {
+  if (error) return <ErrorBox error={error} />;
+  if (!result) return <p className="muted lyrics-status">identifying song and finding lyrics…</p>;
+  return <LyricsView result={result} time={time} onSeek={seek} />;
+};
+
+/** A lyric lookup result: which song it is, and its lyrics (synced if available). */
+function LyricsView({ result: { track, lyrics, instrumental }, time, onSeek }) {
+  return (
+    <>
+      <div className="song-match">
+        {track ? (
+          <>
+            <h3>{track.title}</h3>
+            <span className="muted">
+              {track.artist}
+              {track.album && ` · ${track.album}`}
+            </span>
+          </>
+        ) : (
+          <span className="muted">Couldn't identify this song, so there are no lyrics to show.</span>
+        )}
+      </div>
+      {lyrics?.synced && <SyncedLyrics lines={lyrics.lines} time={time} onSeek={onSeek} />}
+      {lyrics && !lyrics.synced && (
+        <>
+          <p className="muted small">No time-synced lyrics for this song — showing plain lyrics.</p>
+          <div className="karaoke plain">
+            {lyrics.lines.map((l, i) => (
+              <span key={i} className="lyric-line">{l.text}</span>
+            ))}
+          </div>
+        </>
+      )}
+      {track && !lyrics && (
+        <p className="muted">{instrumental ? "This track is instrumental." : "No lyrics found for this song."}</p>
+      )}
+    </>
+  );
+}
+
+/** Karaoke view: the line being sung is highlighted and kept centered. Click a line to jump to it. */
+function SyncedLyrics({ lines, time, onSeek }) {
+  const active = lines.findLastIndex((l) => l.time <= time);
+  const boxRef = useRef();
+  const activeRef = useRef();
+
+  useEffect(() => {
+    const box = boxRef.current;
+    const line = activeRef.current;
+    box.scrollTop = line ? line.offsetTop - box.clientHeight / 2 + line.clientHeight / 2 : 0;
+  }, [active]);
+
+  return (
+    <div className="karaoke" ref={boxRef}>
+      {lines.map((l, i) => (
+        <button
+          key={i}
+          ref={i === active ? activeRef : null}
+          className={`lyric-line ${i === active ? "active" : i < active ? "past" : ""}`}
+          onClick={() => onSeek(l.time)}
+        >
+          {l.text || "♪"}
+        </button>
+      ))}
     </div>
   );
 }

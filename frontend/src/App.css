@@ -22,7 +22,8 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: ui-mon
 .topbar-box:hover { border-color: var(--accent); }
 .topbar .brand { border-color: transparent; font-weight: bold; font-size: 18px; padding-left: 0; }
 .topbar .brand:hover { color: var(--accent); }
-.upload-btn { grid-column: 2; border-color: var(--accent); color: var(--accent); }
+.topbar-center { grid-column: 2; display: flex; gap: 10px; }
+.upload-btn { border-color: var(--accent); color: var(--accent); }
 .upload-btn:disabled { opacity: 0.6; cursor: wait; }
 .topbar-right { grid-column: 3; justify-self: end; }
 .topbar { position: relative; }
@@ -184,16 +185,30 @@ body { margin: 0; background: var(--bg); color: var(--text); font-family: ui-mon
 }
 .btn:disabled { border-color: var(--line); color: var(--muted); cursor: not-allowed; }
 
-.lyrics-input {
-  width: 100%; background: var(--panel); border: 1px solid var(--line);
-  color: var(--text); border-radius: 6px; padding: 12px; font-family: inherit; margin: 8px 0;
-}
-
 .piano-roll { position: relative; background: var(--panel); border-radius: 6px; overflow: hidden; }
 .pr-note { position: absolute; height: 10px; background: var(--accent); border-radius: 2px; }
 
-.karaoke { background: var(--panel); padding: 16px; border-radius: 6px; line-height: 2; }
-.word { color: var(--muted); }
-.word.active { color: var(--accent); font-weight: bold; }
-
-.notation-placeholder { border: 1px dashed var(--line); border-radius: 6px; padding: 24px; text-align: center; }
+/* ---------- lyric cast */
+.song-match { margin: 0; }
+.song-match h3 { margin: 0 0 4px; font-weight: normal; font-size: 20px; }
+.results audio { width: 100%; }
+.karaoke {
+  position: relative; height: 420px; overflow: hidden auto; scroll-behavior: smooth;
+  scrollbar-color: var(--line) transparent;
+  display: flex; flex-direction: column; gap: 4px; padding: 180px 16px;
+  background: var(--panel); border-radius: 6px;
+}
+.karaoke.plain { height: auto; max-height: 520px; padding: 16px; }
+.lyric-line {
+  background: none; border: none; padding: 6px 8px; border-radius: 6px; min-height: 1.5em;
+  font: inherit; font-size: 17px; line-height: 1.5; text-align: center; color: var(--text);
+  transition: color 0.2s, transform 0.2s;
+}
+.stem-panel { display: flex; flex-direction: column; gap: 12px; padding: 12px; }
+.stem-panel .karaoke { background: none; }
+.stem-panel .error-box, .lyrics-status { margin: 0; }
+.lyrics-status { padding: 60px 0; text-align: center; }
+button.lyric-line { cursor: pointer; opacity: 0.55; }
+button.lyric-line:hover { background: #23232a; }
+button.lyric-line.past { color: var(--muted); }
+button.lyric-line.active { color: var(--accent); opacity: 1; transform: scale(1.08); }
